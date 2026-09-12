@@ -60,9 +60,16 @@
   --azul-fraco:#e8eff5;
 
   --raio:10px;
-  --alvo:44px;              /* alvo mínimo de toque */
+  --alvo:44px;              /* alvo mínimo de toque (WCAG) nos botões de interface */
+  --alvo-visor:44px;        /* área de toque dos alvos SOBRE a foto; ampliada no dedo */
   --topo:0px;               /* altura real do cabeçalho, medida em JS */
   --transicao:160ms;
+}
+/* Dedo não é ponteiro fino: 44 px é o mínimo legal, não o confortável. Sobre a
+   foto, onde o alvo é invisível de propósito, a margem precisa ser maior.
+   Ajuste ESTE número para calibrar a facilidade da inspeção no celular. */
+@media (pointer:coarse){
+  :root{ --alvo-visor:58px; }
 }
 @media (prefers-reduced-motion: reduce){
   :root{ --transicao:0ms; }
@@ -183,6 +190,14 @@ details.mais>div{ padding:0 12px 12px; font-size:.84rem; }
   touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none;
 }
 .visor.arrastando{ cursor:grabbing; }
+/* Confirmação de que o toque foi recebido. Aparece em QUALQUER ponto tocado,
+   acerte ou não um alvo: confirma o gesto sem entregar onde está a resposta. */
+.toque-eco{
+  position:absolute; width:44px; height:44px; margin:-22px 0 0 -22px;
+  border-radius:50%; border:2px solid rgba(255,255,255,.85);
+  pointer-events:none; z-index:3; animation:eco 420ms ease-out forwards;
+}
+@keyframes eco{ from{ transform:scale(.35); opacity:.9 } to{ transform:scale(1.3); opacity:0 } }
 .palco{ position:absolute; inset:0; transform-origin:0 0; will-change:transform; }
 .palco img{ display:block; width:100%; height:100%; object-fit:contain; pointer-events:none; }
 
@@ -190,7 +205,7 @@ details.mais>div{ padding:0 12px 12px; font-size:.84rem; }
   /* --iz é o inverso da ampliação: mantém o alvo com tamanho constante na
      tela mesmo quando o palco está ampliado, preservando os 44x44 px. */
   position:absolute; transform:translate(-50%,-50%) scale(var(--iz,1));
-  min-width:var(--alvo); min-height:var(--alvo);
+  min-width:var(--alvo-visor); min-height:var(--alvo-visor);
   border:0; background:transparent; padding:0; margin:0; cursor:pointer;
   border-radius:50%; display:flex; align-items:center; justify-content:center;
 }
@@ -1813,7 +1828,7 @@ function montarVisor(cena){
   visor.appendChild(palco);
 
   let z=1, tx=0, ty=0;
-  const ptrs=new Map(); let arrastou=false, dist0=0, z0=1, mid0=null;
+  const ptrs=new Map(); let arrastou=false, mexeu=false, capturado=null, dist0=0, z0=1, mid0=null;
 
   function limites(){
     const w=visor.clientWidth, h=visor.clientHeight;
@@ -1823,7 +1838,10 @@ function montarVisor(cena){
   function aplicar(){
     limites();
     palco.style.transform=`translate(${tx}px,${ty}px) scale(${z})`;
-    palco.style.setProperty("--iz", String(1/z));
+    /* O alvo NÃO fica travado em tamanho de tela: ampliar precisa facilitar o
+       toque, senão ampliar não serve para nada. Cresce com a raiz da
+       ampliação — em 4x o alvo dobra na tela, sem invadir os vizinhos. */
+    palco.style.setProperty("--iz", String(Math.pow(z,-0.5)));
     btMenos.disabled = z<=Z_MIN+0.001;
     btMais.disabled  = z>=Z_MAX-0.001;
     info.textContent = z>1.01
@@ -1838,29 +1856,48 @@ function montarVisor(cena){
     aplicar();
   }
 
+  /* Confirmação de que o toque chegou. Aparece em qualquer ponto tocado,
+     acerte ou não um alvo, então não entrega onde está a resposta. */
+  function ecoDeToque(e){
+    const r=visor.getBoundingClientRect();
+    const d=el("span",{class:"toque-eco","aria-hidden":"true",
+      style:`left:${(e.clientX-r.left).toFixed(0)}px; top:${(e.clientY-r.top).toFixed(0)}px`});
+    visor.appendChild(d);
+    setTimeout(()=>d.remove(),460);
+  }
+
   visor.addEventListener("pointerdown",e=>{
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY});
-    visor.setPointerCapture(e.pointerId);
+    /* NÃO se captura o ponteiro aqui. Capturar no visor redireciona o
+       pointerup para ele, e o navegador passa a disparar o click no visor em
+       vez do botão do alvo que está embaixo do dedo — o toque simplesmente
+       não registra. A captura só entra quando o gesto vira arrasto de fato. */
     if(ptrs.size===2){
       const [a,b]=[...ptrs.values()];
       dist0=Math.hypot(a.x-b.x,a.y-b.y); z0=z;
       const r=visor.getBoundingClientRect();
       mid0={x:(a.x+b.x)/2-r.left, y:(a.y+b.y)/2-r.top};
     }
-    if(ptrs.size===1) arrastou=false;
+    if(ptrs.size===1){ arrastou=false; mexeu=false; ecoDeToque(e); }
   });
   visor.addEventListener("pointermove",e=>{
     const p=ptrs.get(e.pointerId); if(!p) return;
     const dx=e.clientX-p.x, dy=e.clientY-p.y;
     p.x=e.clientX; p.y=e.clientY;
-    if(Math.hypot(e.clientX-p.x0, e.clientY-p.y0)>8) arrastou=true;
+    /* Tolerância maior no dedo do que no mouse: a mão treme, o dedo rola sobre
+       o vidro e a área de contato é larga. Com 8 px, um toque comum de celular
+       virava "arrasto" e era descartado sem que o aluno entendesse por quê. */
+    const folga = (e.pointerType==="touch") ? 18 : 8;
+    if(Math.hypot(e.clientX-p.x0, e.clientY-p.y0)>folga) arrastou=true;
 
     if(ptrs.size===2 && dist0>0){
       const [a,b]=[...ptrs.values()];
       const d=Math.hypot(a.x-b.x,a.y-b.y);
-      arrastou=true;
+      arrastou=true; mexeu=true;
       zoomEm(z0*(d/dist0), mid0.x, mid0.y);
-    }else if(ptrs.size===1 && z>1.001){
+    }else if(ptrs.size===1 && arrastou && z>1.001){
+      if(!capturado){ try{ visor.setPointerCapture(e.pointerId); capturado=e.pointerId; }catch(_){} }
+      mexeu=true;
       tx+=dx; ty+=dy; aplicar(); visor.classList.add("arrastando");
     }
   });
@@ -1868,14 +1905,20 @@ function montarVisor(cena){
   function soltar(e){
     ptrs.delete(e.pointerId);
     visor.classList.remove("arrastando");
+    if(capturado===e.pointerId){
+      try{ visor.releasePointerCapture(e.pointerId); }catch(_){}
+      capturado=null;
+    }
     if(ptrs.size<2) dist0=0;
-    /* houve arrasto: o clique que o navegador dispara em seguida é descartado */
-    if(arrastou){
+    /* Só descarta o clique se a cena REALMENTE se mexeu. Na visão geral não há
+       o que arrastar: ali um dedo que escorrega alguns pixels continua sendo
+       uma resposta válida, e antes era engolido em silêncio. */
+    if(mexeu){
       suprimir=true;
       clearTimeout(suprimirT);
       suprimirT=setTimeout(()=>{ suprimir=false; },400);
     }
-    if(ptrs.size===0) arrastou=false;
+    if(ptrs.size===0){ arrastou=false; mexeu=false; }
   }
   visor.addEventListener("pointerup",soltar);
   visor.addEventListener("pointercancel",soltar);
