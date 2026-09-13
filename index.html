@@ -1580,6 +1580,15 @@ function el(tag, attrs, ...kids){
 }
 function limpar(n){ while(n.firstChild) n.removeChild(n.firstChild); }
 
+/* Repintar a cena destroi o botao que abriu o dialogo, entao o foco que o
+   dialogo devolveu cai no body: quem navega por teclado voltava ao topo da
+   pagina a cada achado. Isto reencontra o alvo equivalente na cena nova. */
+function devolverFoco(id){
+  const b=document.querySelector('.alvo[data-alvo="'+id+'"]');
+  if(!b) return;
+  try{ b.focus({preventScroll:true}); }catch(e){ b.focus(); }
+}
+
 /* Foco na tela nova SEM arrastar a rolagem. focus() comum empurrava o <main>
    para dentro da janela e escondia o titulo da propria tela sob o cabecalho
    fixo: toda tela abria ja rolada alguns pixels para baixo. */
@@ -1715,7 +1724,11 @@ function fecharModal(silencioso){
   if(!modalAberto) return;
   const m=modalAberto; modalAberto=null;
   m.cx.remove();
-  if(focoAnterior && document.contains(focoAnterior)) focoAnterior.focus();
+  /* preventScroll: o elemento de origem ja esta visivel, e rolar ate ele
+     empurrava a cena para cima e escondia o titulo sob o cabecalho fixo. */
+  if(focoAnterior && document.contains(focoAnterior)){
+    try{ focoAnterior.focus({preventScroll:true}); }catch(e){ focoAnterior.focus(); }
+  }
   if(!silencioso && m.aoFechar) m.aoFechar();
   if(typeof retomarCrono==="function") retomarCrono("modal");
 }
@@ -2514,7 +2527,7 @@ function inspecionarNeutro(n){
       el("div",{class:"rotulo"},"O que foi observado"),
       el("p",{style:"margin:0;font-size:.88rem"}, n.nota)));
     c.appendChild(el("p",{class:"miudo-2"},"Inspecionar uma região neutra não gera penalidade. O registro é separado do de achados."));
-  },{aoFechar:()=>{ if(refPintarCena) refPintarCena(); }});
+  },{aoFechar:()=>{ if(refPintarCena) refPintarCena(); devolverFoco(n.id); }});
 }
 
 function inspecionarAdequado(a){
@@ -2534,14 +2547,15 @@ function inspecionarAdequado(a){
     c.appendChild(aviso("",
       el("p",{},el("b",{},"Cuidado com a conclusão fácil. "), a.naoConcluir)));
     c.appendChild(el("p",{class:"miudo-2"},"Inspecionar um elemento adequado não gera penalidade: o registro aparece separado no relatório."));
-  },{aoFechar:()=>{ if(refPintarCena) refPintarCena(); }});
+  },{aoFechar:()=>{ if(refPintarCena) refPintarCena(); devolverFoco(a.id); }});
 }
 
 function inspecionarItem(it, cena){
   const r=regDe(it.id);
   const primeiraVez=!r.identificado;
   const abrir=()=>abrirModal(it.item,(c)=>{ corpoDoItem(c, it, cena); },
-    {aoFechar:()=>{ if(refPintarCena) refPintarCena(); if(cena) atualizarContador(cena); pintarPassos(); }});
+    {aoFechar:()=>{ if(refPintarCena) refPintarCena(); devolverFoco(it.id);
+                    if(cena) atualizarContador(cena); pintarPassos(); }});
   if(!primeiraVez){ abrir(); return; }
 
   r.identificado=true;
