@@ -27,15 +27,29 @@
   ============================================================================
 -->
 <style>
-/* ========================= [CSS] TOKENS ================================== */
+/* ========================= [CSS] TOKENS ==================================
+   O jogo é um INSTRUMENTO DE AUDITORIA: a fotografia é a prova e o resto da
+   interface é o aparelho em volta dela. Daí duas famílias de superfície —
+   papel claro para ler e julgar, grafite para observar — e números sempre
+   em algarismos tabulares, porque aqui número é medida, não decoração.
+   ======================================================================== */
 :root{
   --branco:#ffffff;
-  --fundo:#f5f7f7;
-  --fundo-2:#eceff0;
-  --borda:#d5dbdb;
-  --borda-forte:#b4bdbd;
-  --tinta:#15201d;          /* texto principal */
+  --fundo:#f4f6f6;
+  --fundo-2:#e9eded;
+  --borda:#d7dddd;
+  --borda-forte:#b2bcbb;
+  --tinta:#121c1a;          /* texto principal */
   --tinta-2:#4a5350;        /* texto secundário — 7.9:1 sobre branco */
+
+  /* Grafite: a superfície de observação. É onde a foto vive, e onde a
+     interface deve sumir para a imagem aparecer. */
+  --grafite:#0d1917;
+  --grafite-2:#172422;
+  --grafite-3:#22302d;
+  --grafite-linha:rgba(255,255,255,.15);
+  --grafite-texto:#c3d2ce;  /* 8.9:1 sobre --grafite */
+  --grafite-fraco:#8ba09b;  /* 4.9:1 sobre --grafite */
 
   /* Verde-água: #2E8B7A rende 4.13:1 sobre branco e NÃO passa em AA para
      texto pequeno. Fica só em preenchimento; o texto usa a variante escura. */
@@ -45,25 +59,52 @@
                                Sobre #2E8B7A o branco renderia 4.13:1 e
                                reprovaria em AA para texto de 15px. */
   --verde-fraco:#e6f2ef;
+  --verde-linha:#a8cec4;    /* contorno de superfície tingida de verde */
+  --verde-claro:#5fc7ae;    /* só sobre grafite: 6.9:1 ali, reprovaria no branco */
 
   /* Âmbar: #D97706 rende 3.19:1 sobre branco. Só preenchimento. */
   --ambar:#D97706;
   --ambar-texto:#8A5200;    /* 6.4:1 sobre branco */
   --ambar-fraco:#fdf3e3;
+  --ambar-linha:#e6c99a;
 
   /* Vermelho: #DC2626 passa (4.8:1), mas o texto usa a variante mais escura. */
   --vermelho:#DC2626;
   --vermelho-texto:#B91C1C; /* 6.5:1 sobre branco */
   --vermelho-fraco:#fdeaea;
+  --vermelho-linha:#eeb2b2;
 
+  --azul:#2c6ea8;
   --azul-texto:#1B4F72;
   --azul-fraco:#e8eff5;
+  --azul-linha:#a9c4d8;
 
-  --raio:10px;
+  /* Escala tipográfica. Passos com salto perceptível: dois tamanhos vizinhos
+     que quase não diferem não constroem hierarquia, só ruído. */
+  --t-cap:.6875rem;   /* rótulo versalete */
+  --t-xs:.75rem;
+  --t-sm:.8125rem;
+  --t-base:.9375rem;  /* corpo dentro de cartões */
+  --t-md:1.0625rem;
+  --t-lg:1.3125rem;
+  --t-xl:1.625rem;
+
+  /* Escala de espaço. Tudo no layout sai daqui. */
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px; --e7:48px;
+
+  --raio:12px;              /* cartões */
+  --raio-sm:8px;            /* controles pequenos */
+  --raio-pilula:999px;
   --alvo:44px;              /* alvo mínimo de toque (WCAG) nos botões de interface */
   --alvo-visor:44px;        /* área de toque dos alvos SOBRE a foto; ampliada no dedo */
   --topo:0px;               /* altura real do cabeçalho, medida em JS */
-  --transicao:160ms;
+  --transicao:180ms;
+  --saida:cubic-bezier(.16,1,.3,1);   /* desaceleração exponencial */
+
+  /* Elevação declarada UMA vez por elemento: cartão usa borda e nenhuma
+     sombra; superfície flutuante usa sombra e nenhuma borda. */
+  --sombra-flutua:0 6px 24px -6px rgba(9,24,21,.28), 0 2px 6px -2px rgba(9,24,21,.18);
+  --sombra-alta:0 18px 48px -12px rgba(9,24,21,.42), 0 4px 12px -4px rgba(9,24,21,.24);
 }
 /* Dedo não é ponteiro fino: 44 px é o mínimo legal, não o confortável. Sobre a
    foto, onde o alvo é invisível de propósito, a margem precisa ser maior.
@@ -84,120 +125,237 @@ body{
   font-size:16px; line-height:1.5;
   -webkit-text-size-adjust:100%;
   overscroll-behavior-y:contain;
+  caret-color:var(--verde-forte);
+  scrollbar-color:var(--borda-forte) transparent;
 }
-h1,h2,h3{ line-height:1.25; margin:0 0 .4em; font-weight:700; }
-h1{ font-size:1.4rem; } h2{ font-size:1.15rem; } h3{ font-size:1rem; }
-p{ margin:0 0 .7em; }
-ul,ol{ margin:0 0 .7em; padding-left:1.2em; }
+/* Superfícies que o navegador desenha por conta própria e que, sem isto,
+   pertenceriam a nenhum sistema: seleção, cursor de texto, barra de rolagem. */
+::selection{ background:#bfe3d9; color:var(--tinta); }
+*::-webkit-scrollbar{ width:10px; height:10px; }
+*::-webkit-scrollbar-track{ background:transparent; }
+*::-webkit-scrollbar-thumb{ background:var(--borda-forte); border-radius:var(--raio-pilula); border:3px solid var(--branco); }
+*::-webkit-scrollbar-thumb:hover{ background:var(--tinta-2); }
+
+h1,h2,h3{ line-height:1.2; margin:0 0 .4em; font-weight:700; letter-spacing:-.015em; text-wrap:balance; }
+h1{ font-size:var(--t-xl); letter-spacing:-.025em; }
+h2{ font-size:var(--t-md); }
+h3{ font-size:1rem; }
+p{ margin:0 0 .7em; max-width:68ch; }
+ul,ol{ margin:0 0 .7em; padding-left:1.2em; max-width:68ch; }
 li{ margin-bottom:.35em; }
 b,strong{ font-weight:700; }
-:focus-visible{ outline:3px solid #0b5cab; outline-offset:2px; border-radius:4px; }
+a{ color:var(--verde-texto); text-underline-offset:3px; text-decoration-thickness:1px; }
+:focus-visible{ outline:2px solid var(--verde-forte); outline-offset:2px; border-radius:4px;
+                box-shadow:0 0 0 5px rgba(31,106,91,.18); }
+.visor :focus-visible,.visor-barra :focus-visible,.capa :focus-visible,.placar :focus-visible{
+  outline-color:#fff; box-shadow:0 0 0 5px rgba(0,0,0,.45); }
 .oculto{ display:none !important; }
 .sr{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+/* Todo número desta interface é medida: algarismos de largura fixa, para que
+   um contador que muda não faça o texto ao lado dançar. */
+.crono,.contador,.medidor .val,table.rel td.n,.zoom-leitura,.inventario dd{ font-variant-numeric:tabular-nums; }
+
+/* Ícones: traço único de 1.75 px numa grade de 24, herdando a cor do texto.
+   Nada de emoji — o desenho do emoji muda de sistema para sistema e nenhuma
+   família de glifo mantém peso consistente entre plataformas. */
+.ico{ display:inline-flex; flex:0 0 auto; width:20px; height:20px; }
+.ico svg{ width:100%; height:100%; display:block; }
+.ico-sm{ width:16px; height:16px; }
+.ico-lg{ width:24px; height:24px; }
 
 /* ========================= [CSS] ESTRUTURA =============================== */
-#app{ max-width:520px; margin:0 auto; background:var(--branco); min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+#app{ max-width:560px; margin:0 auto; background:var(--branco); min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
 
 header#topo{
-  position:sticky; top:0; z-index:40; background:var(--branco);
-  border-bottom:1px solid var(--borda); padding:8px 10px 0;
+  position:sticky; top:0; z-index:40; background:rgba(255,255,255,.92);
+  backdrop-filter:saturate(1.6) blur(10px); -webkit-backdrop-filter:saturate(1.6) blur(10px);
+  border-bottom:1px solid var(--borda); padding:var(--e2) var(--e3) 0;
 }
-.topo-linha{ display:flex; align-items:center; gap:6px; }
-.marca{ font-size:.78rem; font-weight:700; letter-spacing:.02em; color:var(--verde-texto); flex:1; min-width:0;
-        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.topo-acoes{ display:flex; gap:4px; flex-shrink:0; }
+.topo-linha{ display:flex; align-items:center; gap:var(--e2); }
+.marca{ display:flex; align-items:baseline; gap:6px; flex:1; min-width:0; }
+.marca b{ font-size:.8rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--verde-texto);
+          white-space:nowrap; }
+.marca span{ font-size:.76rem; color:var(--tinta-2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.topo-acoes{ display:flex; gap:var(--e1); flex-shrink:0; }
+/* Em tela estreita os quatro rotulos de acao e a marca disputam a mesma
+   linha. O complemento da marca sai primeiro: e o unico texto do cabecalho
+   que nao nomeia uma acao. */
+@media (max-width:479px){ .marca span{ display:none; } }
 .icone-btn{
-  min-width:var(--alvo); min-height:var(--alvo); border:1px solid var(--borda);
-  background:var(--branco); border-radius:var(--raio); cursor:pointer;
-  font-size:.68rem; font-weight:700; color:var(--tinta-2); padding:2px 6px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; line-height:1.1;
+  min-width:var(--alvo); min-height:var(--alvo); border:1px solid transparent;
+  background:transparent; border-radius:var(--raio-sm); cursor:pointer;
+  font-size:var(--t-cap); font-weight:700; color:var(--tinta-2); padding:2px 5px; letter-spacing:.01em;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; line-height:1;
+  transition:background var(--transicao) var(--saida), color var(--transicao) var(--saida);
 }
-.icone-btn:hover{ background:var(--fundo-2); }
-.icone-btn[aria-pressed="true"]{ background:var(--verde-fraco); border-color:var(--verde); color:var(--verde-texto); }
-.icone-btn .g{ font-size:1rem; }
+.icone-btn:hover{ background:var(--fundo-2); color:var(--tinta); }
+.icone-btn[aria-pressed="true"]{ background:var(--verde-fraco); color:var(--verde-texto); }
 
-/* passos */
-nav#passos{ display:flex; gap:4px; padding:8px 0 9px; }
-/* Indicadores de progresso: não são acionáveis, por isso são div e não
-   button — assim não entram na regra de alvo de toque de 44x44. */
-.passo{
-  flex:1; display:flex; flex-direction:column; gap:4px; border-radius:6px;
-}
-.passo .barra{ height:5px; border-radius:3px; background:var(--fundo-2); overflow:hidden; }
-.passo .barra i{ display:block; height:100%; width:0; background:var(--verde); transition:width var(--transicao) ease; }
-.passo .rot{ font-size:.62rem; font-weight:700; color:var(--tinta-2); letter-spacing:.02em;
+/* Trilho de etapas: uma rota contínua, não três barrinhas soltas. */
+nav#passos{ display:flex; gap:2px; padding:var(--e2) 0 10px; align-items:stretch; }
+.passo{ flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.passo .barra{ height:4px; border-radius:var(--raio-pilula); background:var(--fundo-2); overflow:hidden; }
+.passo .barra i{ display:block; height:100%; width:0; background:var(--verde);
+                 border-radius:var(--raio-pilula); transition:width 420ms var(--saida); }
+.passo .rot{ font-size:var(--t-cap); font-weight:700; color:var(--tinta-2); letter-spacing:.02em;
              white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .passo[aria-current="step"] .rot{ color:var(--verde-texto); }
-.passo[aria-current="step"] .barra{ box-shadow:0 0 0 2px var(--verde-fraco); }
+.passo[aria-current="step"] .barra{ background:var(--verde-fraco); }
 
-main{ flex:1; padding:14px 14px 110px; }
-.tela{ animation:entra var(--transicao) ease; }
-@keyframes entra{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:none;} }
+main{ flex:1; padding:var(--e5) var(--e4) 112px; }
+/* sem rodape fixo nao ha o que desviar: o vao no fim da tela vira so vazio */
+main.sem-rodape{ padding-bottom:var(--e6); }
+
+/* Cabecalho da cena. No celular ele disputa altura com a fotografia, que e o
+   objeto da etapa: o titulo encolhe para caber numa linha e devolver espaco
+   a imagem e aos controles de ampliacao. */
+.tit-cena{ display:flex; align-items:baseline; gap:var(--e2); margin-bottom:var(--e2); }
+.tit-cena h1{ margin:0; font-size:var(--t-lg); flex:1; min-width:0; }
+.tit-cena .selo{ flex:0 0 auto; }
+@media (max-width:479px){ .tit-cena h1{ font-size:var(--t-md); } }
+.tela{ animation:entra 320ms var(--saida); }
+@keyframes entra{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none;} }
 
 /* ========================= [CSS] COMPONENTES ============================= */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:7px;
-  min-height:var(--alvo); padding:11px 16px; border-radius:var(--raio);
+  min-height:var(--alvo); padding:11px var(--e4); border-radius:var(--raio-sm);
   border:1px solid var(--verde-forte); background:var(--verde-forte); color:#fff;
   font:inherit; font-weight:700; font-size:.92rem; cursor:pointer; text-align:center;
-  transition:filter var(--transicao) ease;
+  letter-spacing:-.01em;
+  transition:background var(--transicao) var(--saida), border-color var(--transicao) var(--saida), transform 120ms var(--saida);
 }
-.btn:hover{ filter:brightness(1.07); }
-.btn:disabled{ opacity:.45; cursor:not-allowed; filter:none; }
-.btn.sec{ background:var(--branco); color:var(--verde-texto); border-color:var(--borda-forte); }
-.btn.sec:hover{ background:var(--verde-fraco); }
+.btn:hover{ background:#25806e; border-color:#25806e; }
+.btn:active{ transform:translateY(1px); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; background:var(--verde-forte); transform:none; }
+.btn.sec{ background:var(--branco); color:var(--verde-texto); border-color:var(--verde-linha); }
+.btn.sec:hover{ background:var(--verde-fraco); border-color:var(--verde); }
 .btn.neutro{ background:var(--branco); color:var(--tinta-2); border-color:var(--borda-forte); }
-.btn.neutro:hover{ background:var(--fundo-2); }
-.btn.perigo{ background:var(--branco); color:var(--vermelho-texto); border-color:var(--vermelho-texto); }
+.btn.neutro:hover{ background:var(--fundo-2); border-color:var(--tinta-2); color:var(--tinta); }
+.btn.perigo{ background:var(--branco); color:var(--vermelho-texto); border-color:var(--vermelho-linha); }
+.btn.perigo:hover{ background:var(--vermelho-fraco); border-color:var(--vermelho); }
 .btn.bloco{ display:flex; width:100%; }
-.btn-linha{ display:flex; gap:8px; flex-wrap:wrap; }
+.btn-linha{ display:flex; gap:var(--e2); flex-wrap:wrap; }
 .btn-linha>.btn{ flex:1 1 140px; }
 
-.cartao{ border:1px solid var(--borda); border-radius:var(--raio); padding:13px; background:var(--branco); margin-bottom:11px; }
-.cartao.suave{ background:var(--fundo); }
+.cartao{ border:1px solid var(--borda); border-radius:var(--raio); padding:var(--e4); background:var(--branco); margin-bottom:var(--e3); }
+.cartao.suave{ background:var(--fundo); border-color:var(--fundo-2); }
+.cartao>*:last-child{ margin-bottom:0; }
 .selo{
-  display:inline-flex; align-items:center; gap:5px; font-size:.7rem; font-weight:700;
-  padding:3px 8px; border-radius:99px; border:1px solid; letter-spacing:.02em; line-height:1.3;
+  display:inline-flex; align-items:center; gap:5px; font-size:var(--t-xs); font-weight:700;
+  padding:4px 9px; border-radius:var(--raio-pilula); border:1px solid; letter-spacing:-.005em; line-height:1.3;
 }
-.selo.ok{ color:var(--verde-texto); border-color:var(--verde); background:var(--verde-fraco); }
-.selo.at{ color:var(--ambar-texto); border-color:var(--ambar); background:var(--ambar-fraco); }
-.selo.rv{ color:var(--vermelho-texto); border-color:var(--vermelho); background:var(--vermelho-fraco); }
-.selo.inf{ color:var(--azul-texto); border-color:#7ea6c4; background:var(--azul-fraco); }
-.selo.neutro{ color:var(--tinta-2); border-color:var(--borda-forte); background:var(--fundo-2); }
+.selo .ico{ width:14px; height:14px; }
+.selo.ok{ color:var(--verde-texto); border-color:var(--verde-linha); background:var(--verde-fraco); }
+.selo.at{ color:var(--ambar-texto); border-color:var(--ambar-linha); background:var(--ambar-fraco); }
+.selo.rv{ color:var(--vermelho-texto); border-color:var(--vermelho-linha); background:var(--vermelho-fraco); }
+.selo.inf{ color:var(--azul-texto); border-color:var(--azul-linha); background:var(--azul-fraco); }
+.selo.neutro{ color:var(--tinta-2); border-color:var(--borda); background:var(--fundo-2); }
 
-.aviso{ border-left:4px solid var(--ambar); background:var(--ambar-fraco); padding:10px 12px; border-radius:0 var(--raio) var(--raio) 0; font-size:.85rem; margin-bottom:11px; }
-.aviso.info{ border-left-color:#7ea6c4; background:var(--azul-fraco); }
-.aviso.grave{ border-left-color:var(--vermelho); background:var(--vermelho-fraco); }
-.aviso.bom{ border-left-color:var(--verde); background:var(--verde-fraco); }
+/* Aviso: superfície tingida com contorno de 1 px da própria família de cor.
+   O ícone identifica a natureza do aviso sem depender só da cor. */
+.aviso{ display:flex; gap:10px; border:1px solid var(--ambar-linha); background:var(--ambar-fraco);
+        color:var(--ambar-texto); padding:var(--e3) var(--e4); border-radius:var(--raio);
+        font-size:var(--t-base); margin-bottom:var(--e3); }
+.aviso>.ico{ margin-top:2px; }
+.aviso>div{ min-width:0; flex:1; }
+.aviso p{ margin:0 0 .5em; color:var(--tinta); }
 .aviso p:last-child{ margin-bottom:0; }
+.aviso.info{ border-color:var(--azul-linha); background:var(--azul-fraco); color:var(--azul-texto); }
+.aviso.grave{ border-color:var(--vermelho-linha); background:var(--vermelho-fraco); color:var(--vermelho-texto); }
+.aviso.bom{ border-color:var(--verde-linha); background:var(--verde-fraco); color:var(--verde-texto); }
 
-.miudo{ font-size:.78rem; color:var(--tinta-2); }
-.miudo-2{ font-size:.72rem; color:var(--tinta-2); }
-.rotulo{ font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--tinta-2); margin-bottom:5px; }
+.miudo{ font-size:var(--t-sm); color:var(--tinta-2); }
+.miudo-2{ font-size:var(--t-xs); color:var(--tinta-2); }
+.rotulo{ font-size:var(--t-cap); font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--tinta-2); margin-bottom:var(--e2); }
 
-details.mais{ border:1px solid var(--borda); border-radius:var(--raio); margin:9px 0; background:var(--fundo); }
-details.mais>summary{ cursor:pointer; padding:11px 12px; font-weight:700; font-size:.84rem; min-height:var(--alvo);
-  display:flex; align-items:center; gap:6px; color:var(--verde-texto); list-style:none; }
+details.mais{ border:1px solid var(--borda); border-radius:var(--raio); margin:var(--e3) 0; background:var(--fundo); }
+details.mais>summary{ cursor:pointer; padding:11px var(--e3); font-weight:700; font-size:var(--t-sm); min-height:var(--alvo);
+  display:flex; align-items:center; gap:var(--e2); color:var(--verde-texto); list-style:none; border-radius:var(--raio); }
 details.mais>summary::-webkit-details-marker{ display:none; }
-details.mais>summary::before{ content:"▸"; transition:transform var(--transicao) ease; }
-details.mais[open]>summary::before{ transform:rotate(90deg); }
-details.mais>div{ padding:0 12px 12px; font-size:.84rem; }
+details.mais>summary .ico{ width:16px; height:16px; transition:transform var(--transicao) var(--saida); }
+details.mais[open]>summary .ico{ transform:rotate(90deg); }
+details.mais>summary:hover{ background:var(--fundo-2); }
+details.mais>div{ padding:0 var(--e3) var(--e3); font-size:var(--t-base); }
 
-/* ========================= [CSS] VISOR DE CENA =========================== */
-.visor-caixa{ margin:0 -14px 10px; background:#10201d; position:relative; }
+/* ========================= [CSS] CAPA ===================================
+   A abertura de um jogo de inspeção fotográfica precisa mostrar do que se
+   trata antes de explicar. A imagem do fundo é a própria cena 3 do banco,
+   escurecida: promessa verdadeira, não ilustração decorativa. Se a foto não
+   estiver embutida, o bloco continua de pé só com o grafite.
+   ====================================================================== */
+.capa{
+  position:relative; margin:calc(var(--e5) * -1) calc(var(--e4) * -1) var(--e5);
+  padding:var(--e6) var(--e4) var(--e5); background:var(--grafite);
+  overflow:hidden; isolation:isolate;
+}
+.capa-foto{
+  position:absolute; inset:0; z-index:-2; background-size:cover; background-position:58% 30%;
+  opacity:.82; filter:saturate(.7) contrast(.94);
+}
+/* O degrade existe para o texto, nao para esconder a cena: fica aberto em
+   cima, onde a cabine aparece, e fecha embaixo, onde o titulo assenta. */
+.capa::after{
+  content:""; position:absolute; inset:0; z-index:-1;
+  background:linear-gradient(176deg, rgba(13,25,23,.28) 0%, rgba(13,25,23,.72) 46%, rgba(13,25,23,.94) 82%, var(--grafite) 100%);
+}
+.capa h1{ color:#fff; font-size:clamp(1.9rem, 8.5vw, 2.6rem); letter-spacing:-.035em; margin:0 0 var(--e3); max-width:16ch; }
+.capa h1 i{ display:block; font-style:normal; color:var(--verde-claro); }
+.capa p{ color:var(--grafite-texto); font-size:var(--t-base); margin:0; max-width:46ch; }
+
+/* Guia do tutorial: sequencia de instrucoes com trilho de icones, nao tres
+   cartoes iguais. A ordem dos passos e a propria informacao. */
+.guia{ list-style:none; margin:0 0 var(--e4); padding:0; border-top:1px solid var(--borda); }
+.guia li{ display:flex; gap:var(--e4); padding:var(--e4) 0; margin:0;
+          border-bottom:1px solid var(--borda); }
+.guia .ico{ width:24px; height:24px; color:var(--verde-texto); margin-top:1px; }
+.guia b{ display:block; font-size:var(--t-md); letter-spacing:-.02em; margin-bottom:var(--e1); }
+.guia p{ margin:0; font-size:var(--t-base); color:var(--tinta-2); }
+
+/* Inventário da auditoria: o que há dentro, lido de relance. */
+.inventario{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px;
+             background:var(--borda); border:1px solid var(--borda); border-radius:var(--raio);
+             overflow:hidden; margin:0 0 var(--e3); }
+/* o valor assenta no rodape da celula: sem isso, um rotulo que quebra em
+   duas linhas empurra o numero para baixo e a linha perde o alinhamento. */
+.inventario>div{ background:var(--branco); padding:var(--e3) var(--e4);
+                 display:flex; flex-direction:column; justify-content:space-between; }
+.inventario dt{ font-size:var(--t-cap); font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--tinta-2); }
+.inventario dd{ margin:3px 0 0; font-size:var(--t-lg); font-weight:700; letter-spacing:-.03em; color:var(--tinta); line-height:1.15; }
+.inventario dd small{ font-size:var(--t-sm); font-weight:600; color:var(--tinta-2); letter-spacing:0; }
+
+/* Escolha em par (com tempo / sem tempo): dois estados de um mesmo controle. */
+.par-escolha{ display:grid; grid-template-columns:1fr 1fr; gap:var(--e2); }
+.par-escolha .btn{ flex-direction:column; gap:2px; padding:10px var(--e2); line-height:1.25; }
+.par-escolha .btn small{ font-weight:600; font-size:var(--t-xs); opacity:.85; }
+
+/* ========================= [CSS] VISOR DE CENA ===========================
+   Quadro de observação: moldura escura, marcas de canto e leitura de
+   ampliação. As marcas dizem "isto é um enquadramento", que é exatamente o
+   que a etapa pede — olhar dentro de um recorte.
+   ====================================================================== */
+.visor-caixa{ margin:0 calc(var(--e4) * -1) var(--e3); background:var(--grafite); position:relative; }
 .visor{
-  position:relative; width:100%; overflow:hidden; background:#10201d;
+  position:relative; width:100%; overflow:hidden; background:var(--grafite);
   touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none;
 }
 .visor.arrastando{ cursor:grabbing; }
+/* Marcas de canto: ficam nos cantos, onde não há alvo mapeado, e não recebem
+   ponteiro — não roubam nenhum toque do aluno. */
+.visor-marcas{ position:absolute; inset:10px; z-index:4; pointer-events:none; }
+.visor-marcas span{ position:absolute; width:14px; height:14px; border:2px solid rgba(255,255,255,.45); }
+.visor-marcas span:nth-child(1){ top:0; left:0; border-right:0; border-bottom:0; }
+.visor-marcas span:nth-child(2){ top:0; right:0; border-left:0; border-bottom:0; }
+.visor-marcas span:nth-child(3){ bottom:0; left:0; border-right:0; border-top:0; }
+.visor-marcas span:nth-child(4){ bottom:0; right:0; border-left:0; border-top:0; }
 /* Confirmação de que o toque foi recebido. Aparece em QUALQUER ponto tocado,
    acerte ou não um alvo: confirma o gesto sem entregar onde está a resposta. */
 .toque-eco{
   position:absolute; width:44px; height:44px; margin:-22px 0 0 -22px;
   border-radius:50%; border:2px solid rgba(255,255,255,.85);
-  pointer-events:none; z-index:3; animation:eco 420ms ease-out forwards;
+  pointer-events:none; z-index:3; animation:eco 480ms var(--saida) forwards;
 }
-@keyframes eco{ from{ transform:scale(.35); opacity:.9 } to{ transform:scale(1.3); opacity:0 } }
+@keyframes eco{ from{ transform:scale(.35); opacity:.9 } to{ transform:scale(1.35); opacity:0 } }
 .palco{ position:absolute; inset:0; transform-origin:0 0; will-change:transform; }
 .palco img{ display:block; width:100%; height:100%; object-fit:contain; pointer-events:none; }
 
@@ -215,154 +373,231 @@ details.mais>div{ padding:0 12px 12px; font-size:.84rem; }
 .alvo.achado .pino,.alvo.inspecionado .pino{
   width:30px; height:30px; opacity:1; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  font-size:.85rem; font-weight:700; color:#fff; border:2px solid #fff;
-  box-shadow:0 1px 5px rgba(0,0,0,.5); animation:pop var(--transicao) ease;
+  font-size:.85rem; font-weight:800; color:#fff; border:2px solid #fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.55); animation:pop 420ms var(--saida);
 }
-@keyframes pop{ from{ transform:scale(.6);} to{ transform:scale(1);} }
+/* Anel de descoberta: o único momento autoral de movimento da Etapa 1.
+   Dispara uma vez, no instante em que um risco entra no registro. */
+.alvo.pulsa::after{
+  content:""; position:absolute; width:30px; height:30px; border-radius:50%;
+  border:2px solid var(--vermelho); animation:anel 640ms var(--saida) forwards; pointer-events:none;
+}
+@keyframes anel{ from{ transform:scale(1); opacity:.95 } to{ transform:scale(3.4); opacity:0 } }
+@keyframes pop{ 0%{ transform:scale(.4);} 60%{ transform:scale(1.12);} 100%{ transform:scale(1);} }
 .alvo.achado .pino{ background:var(--vermelho); }
 .alvo.tratado .pino{ background:var(--verde); }
 .alvo.rever .pino{ background:var(--ambar); }
-.alvo.inspecionado .pino{ background:#2c6ea8; }
-.alvo.grupo .pino{ border-radius:8px; }
+.alvo.inspecionado .pino{ background:var(--azul); }
+.alvo.grupo .pino{ border-radius:7px; }
 
-.visor-barra{ display:flex; gap:5px; padding:7px 14px; background:#10201d; align-items:center; flex-wrap:wrap; }
+.visor-barra{ display:flex; gap:var(--e1); padding:var(--e2) var(--e3); background:var(--grafite); align-items:center; }
 .visor-barra .zbtn{
-  min-width:var(--alvo); min-height:var(--alvo); border-radius:8px;
-  background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.28);
-  font-size:1rem; font-weight:700; cursor:pointer; padding:0 9px;
+  min-width:var(--alvo); min-height:var(--alvo); border-radius:var(--raio-sm);
+  background:var(--grafite-3); color:#fff; border:1px solid var(--grafite-linha);
+  cursor:pointer; padding:0 10px; font:inherit; font-size:var(--t-xs); font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  transition:background var(--transicao) var(--saida);
 }
-.visor-barra .zbtn:hover{ background:rgba(255,255,255,.22); }
-.visor-barra .zbtn:disabled{ opacity:.35; cursor:not-allowed; }
-.visor-barra .info{ color:#d7e3e0; font-size:.72rem; margin-left:auto; text-align:right; line-height:1.3; }
-.legenda-sim{ font-size:.63rem; color:#9fb3af; padding:0 14px 7px; background:#10201d; }
+.visor-barra .zbtn:hover{ background:#2e3f3b; }
+.visor-barra .zbtn:disabled{ opacity:.35; cursor:not-allowed; background:var(--grafite-3); }
+.visor-barra .info{ color:var(--grafite-fraco); font-size:var(--t-xs); margin-left:auto; text-align:right; line-height:1.35; }
+.visor-barra .info .zoom-leitura{ color:#fff; font-weight:700; }
+.legenda-sim{ font-size:var(--t-cap); color:var(--grafite-fraco); padding:0 var(--e3) var(--e2); background:var(--grafite); margin:0; }
 
-.hud{ display:flex; gap:7px; align-items:center; margin-bottom:9px; flex-wrap:wrap; }
+/* HUD da cena: o painel de medição. Cronômetro dominante à esquerda,
+   achados como marcas de posição — uma marca por item da cena. */
+.hud{ display:flex; gap:var(--e3); align-items:center; margin-bottom:var(--e3); flex-wrap:wrap; }
 .crono{
-  font-variant-numeric:tabular-nums; font-weight:700; font-size:.9rem;
-  padding:6px 11px; border-radius:99px; border:1px solid var(--borda-forte); background:var(--fundo);
-  display:inline-flex; align-items:center; gap:6px; min-height:34px;
+  font-weight:700; font-size:var(--t-md); letter-spacing:-.02em;
+  padding:7px var(--e3) 8px; border-radius:var(--raio-sm); border:1px solid var(--borda);
+  background:var(--branco); color:var(--tinta);
+  display:inline-flex; flex-direction:column; gap:6px; min-width:92px;
 }
-.crono.baixo{ border-color:var(--ambar); background:var(--ambar-fraco); color:var(--ambar-texto); }
-.crono.pausado{ border-color:#7ea6c4; background:var(--azul-fraco); color:var(--azul-texto); }
-.contador{ font-size:.8rem; color:var(--tinta-2); font-weight:700; }
+.crono .linha{ display:flex; align-items:center; gap:6px; line-height:1; }
+.crono .ico{ width:15px; height:15px; }
+.crono .trilho-t{ height:3px; border-radius:var(--raio-pilula); background:var(--fundo-2); overflow:hidden; }
+.crono .trilho-t i{ display:block; height:100%; width:100%; background:var(--verde); border-radius:var(--raio-pilula);
+                    transition:width 1s linear, background var(--transicao) var(--saida); }
+.crono.baixo{ border-color:var(--ambar-linha); background:var(--ambar-fraco); color:var(--ambar-texto); }
+.crono.baixo .trilho-t{ background:#f0dfc2; }
+.crono.baixo .trilho-t i{ background:var(--ambar); }
+.crono.pausado{ border-color:var(--azul-linha); background:var(--azul-fraco); color:var(--azul-texto); }
+.crono.pausado .trilho-t i{ background:var(--azul); }
 
-/* ========================= [CSS] FICHA / MODO TEXTUAL ==================== */
+.contador{ font-size:var(--t-xs); color:var(--tinta-2); font-weight:700; display:flex; flex-direction:column; gap:6px; }
+.contador i{ font-style:normal; }
+/* no celular o HUD inteiro precisa caber numa linha com o botao de pista;
+   o que sai e o complemento, que as marcas verdes ja mostram. */
+@media (max-width:479px){ .so-largo{ display:none; } }
+.pips{ display:flex; gap:3px; }
+.pips i{ width:15px; height:5px; border-radius:var(--raio-pilula); background:var(--fundo-2);
+         transition:background 320ms var(--saida); }
+.pips i.ident{ background:var(--vermelho); }
+.pips i.trat{ background:var(--verde); }
+
+/* ========================= [CSS] FICHA / MODO TEXTUAL ====================
+   O estado do item é ponto colorido + texto, nunca só cor. O contorno do
+   cartão acompanha a família de cor do estado, com 1 px em toda a volta.
+   ====================================================================== */
 .ficha-item{
   width:100%; text-align:left; border:1px solid var(--borda); border-radius:var(--raio);
-  background:var(--branco); padding:11px 12px; margin-bottom:8px; cursor:pointer;
-  font:inherit; font-size:.87rem; min-height:var(--alvo); display:block;
+  background:var(--branco); padding:var(--e3) var(--e4); margin-bottom:var(--e2); cursor:pointer;
+  font:inherit; font-size:var(--t-base); min-height:var(--alvo); display:block; position:relative;
+  transition:border-color var(--transicao) var(--saida), background var(--transicao) var(--saida);
 }
-.ficha-item:hover{ background:var(--fundo); }
-.ficha-item .loc{ font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--tinta-2); display:block; margin-bottom:3px; }
-.ficha-item.achado{ border-left:5px solid var(--vermelho); }
-.ficha-item.tratado{ border-left:5px solid var(--verde); }
-.ficha-item.rever{ border-left:5px solid var(--ambar); }
-.ficha-item.inspecionado{ border-left:5px solid #2c6ea8; }
-.ficha-item .est{ display:block; margin-top:6px; }
+.ficha-item:hover{ background:var(--fundo); border-color:var(--borda-forte); }
+.ficha-item .loc{ font-size:var(--t-cap); font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--tinta-2); display:block; margin-bottom:var(--e1); padding-right:20px; }
+.ficha-item.achado::after,.ficha-item.tratado::after,.ficha-item.rever::after,.ficha-item.inspecionado::after{
+  content:""; position:absolute; top:var(--e4); right:var(--e4); width:9px; height:9px; border-radius:50%; }
+.ficha-item.achado{ border-color:var(--vermelho-linha); }
+.ficha-item.achado::after{ background:var(--vermelho); }
+.ficha-item.tratado{ border-color:var(--verde-linha); }
+.ficha-item.tratado::after{ background:var(--verde); }
+.ficha-item.rever{ border-color:var(--ambar-linha); }
+.ficha-item.rever::after{ background:var(--ambar); }
+.ficha-item.inspecionado{ border-color:var(--azul-linha); }
+.ficha-item.inspecionado::after{ background:var(--azul); }
+.ficha-item .est{ display:block; margin-top:var(--e2); }
 
 /* ========================= [CSS] DIÁLOGO ================================= */
-.fundo-modal{ position:fixed; inset:0; background:rgba(10,20,18,.62); z-index:90; display:flex; align-items:flex-end; justify-content:center; }
+.fundo-modal{ position:fixed; inset:0; background:rgba(8,18,16,.6); z-index:90; display:flex; align-items:flex-end; justify-content:center;
+  animation:vela 200ms var(--saida); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+@keyframes vela{ from{ opacity:0 } to{ opacity:1 } }
 @media(min-width:560px){ .fundo-modal{ align-items:center; } }
 .modal{
-  background:var(--branco); width:100%; max-width:520px; max-height:88vh; max-height:88dvh; overflow-y:auto;
-  border-radius:16px 16px 0 0; padding:16px 15px calc(16px + env(safe-area-inset-bottom));
-  animation:sobe var(--transicao) ease; -webkit-overflow-scrolling:touch;
+  background:var(--branco); width:100%; max-width:560px; max-height:88vh; max-height:88dvh; overflow-y:auto;
+  border-radius:18px 18px 0 0; padding:var(--e5) var(--e4) calc(var(--e5) + env(safe-area-inset-bottom));
+  animation:sobe 280ms var(--saida); -webkit-overflow-scrolling:touch; box-shadow:var(--sombra-alta);
 }
-@media(min-width:560px){ .modal{ border-radius:16px; } }
-@keyframes sobe{ from{ transform:translateY(14px); opacity:.4;} to{ transform:none; opacity:1;} }
-.modal-topo{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:9px; }
+@media(min-width:560px){ .modal{ border-radius:18px; } }
+@keyframes sobe{ from{ transform:translateY(18px); opacity:.5;} to{ transform:none; opacity:1;} }
+.modal-topo{ display:flex; justify-content:space-between; align-items:flex-start; gap:var(--e3); margin-bottom:var(--e3); }
+.modal-topo h2{ font-size:var(--t-lg); letter-spacing:-.025em; }
 .fechar{ min-width:var(--alvo); min-height:var(--alvo); border:1px solid var(--borda); background:var(--branco);
-  border-radius:var(--raio); font-size:1.1rem; cursor:pointer; color:var(--tinta-2); flex-shrink:0; }
-.fechar:hover{ background:var(--fundo-2); }
+  border-radius:var(--raio-sm); cursor:pointer; color:var(--tinta-2); flex-shrink:0;
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background var(--transicao) var(--saida); }
+.fechar:hover{ background:var(--fundo-2); color:var(--tinta); }
 
 /* opções de conduta / alternativas de dilema */
 .opcao{
-  display:block; width:100%; text-align:left; border:1px solid var(--borda); border-radius:var(--raio);
-  background:var(--branco); padding:12px 13px; margin-bottom:9px; cursor:pointer;
-  font:inherit; font-size:.87rem; line-height:1.45; min-height:var(--alvo);
+  display:flex; gap:10px; width:100%; text-align:left; border:1px solid var(--borda); border-radius:var(--raio);
+  background:var(--branco); padding:var(--e3) var(--e4); margin-bottom:var(--e2); cursor:pointer;
+  font:inherit; font-size:var(--t-base); line-height:1.45; min-height:var(--alvo);
+  transition:border-color var(--transicao) var(--saida), background var(--transicao) var(--saida);
 }
-.opcao:hover{ background:var(--fundo); border-color:var(--borda-forte); }
+.opcao:hover{ background:var(--fundo); border-color:var(--verde); }
 .opcao:disabled{ cursor:default; }
-.opcao .letra{ font-weight:700; color:var(--verde-texto); margin-right:6px; }
-.opcao.certa{ border-color:var(--verde); background:var(--verde-fraco); border-width:2px; }
-.opcao.errada{ border-color:var(--vermelho); background:var(--vermelho-fraco); border-width:2px; }
+.opcao .letra{ font-weight:800; color:var(--verde-texto); flex:0 0 auto; }
+.opcao.certa{ border-color:var(--verde); background:var(--verde-fraco); }
+.opcao.errada{ border-color:var(--vermelho); background:var(--vermelho-fraco); }
 .opcao.apagada{ opacity:.6; }
-.marca-op{ display:block; margin-top:7px; font-size:.76rem; font-weight:700; }
+.marca-op{ display:block; margin-top:7px; font-size:var(--t-sm); font-weight:700; }
 
 /* ========================= [CSS] CAMADAS (ETAPA 2) ====================== */
-.grade-camadas{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+.grade-camadas{ display:grid; grid-template-columns:1fr 1fr; gap:var(--e2); margin-top:var(--e3); }
 .camada-btn{
-  min-height:62px; border:2px solid var(--borda); border-radius:var(--raio); background:var(--branco);
-  font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; padding:9px 7px; color:var(--tinta);
-  display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.25;
+  min-height:92px; border:1px solid var(--borda); border-radius:var(--raio); background:var(--branco);
+  font:inherit; font-size:var(--t-sm); font-weight:700; cursor:pointer; padding:var(--e3) var(--e2); color:var(--tinta);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--e2);
+  text-align:center; line-height:1.25;
+  transition:border-color var(--transicao) var(--saida), background var(--transicao) var(--saida), color var(--transicao) var(--saida);
 }
-.camada-btn:hover{ border-color:var(--verde); background:var(--verde-fraco); }
+.camada-btn:hover{ border-color:var(--verde); background:var(--verde-fraco); color:var(--verde-texto); }
 .camada-btn:disabled{ opacity:.5; cursor:not-allowed; }
-.camada-btn .ic{ font-size:1.05rem; display:block; margin-bottom:3px; }
+.camada-btn .ico{ width:26px; height:26px; color:var(--verde-texto); }
 
-/* ========================= [CSS] RELATÓRIO ============================== */
-table.rel{ width:100%; border-collapse:collapse; font-size:.78rem; margin-bottom:10px; }
-table.rel th,table.rel td{ border:1px solid var(--borda); padding:6px 7px; text-align:left; vertical-align:top; }
-table.rel th{ background:var(--fundo-2); font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; }
-table.rel td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.rolagem-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:10px; }
-
-.medidor{ margin-bottom:12px; }
-.medidor .cab{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:4px; }
-.medidor .val{ font-size:1.5rem; font-weight:700; font-variant-numeric:tabular-nums; color:var(--verde-texto); }
-.medidor .trilho{ height:13px; background:var(--fundo-2); border-radius:7px; overflow:hidden; border:1px solid var(--borda); }
-.medidor .trilho i{ display:block; height:100%; background:var(--verde); width:0; transition:width 600ms ease; }
-.medidor.alt .val{ color:var(--ambar-texto); }
+/* ========================= [CSS] RELATÓRIO ==============================
+   O relatório é o pagamento da jornada: os dois medidores abrem em bloco
+   grafite, porque são o resultado, e a tabela vem abaixo como detalhamento.
+   ====================================================================== */
+.placar{ background:var(--grafite); border-radius:var(--raio); padding:var(--e5) var(--e4);
+         margin-bottom:var(--e4); display:grid; gap:var(--e5); }
+@media(min-width:520px){ .placar{ grid-template-columns:1fr 1fr; } }
+.medidor .cab{ display:flex; flex-direction:column; gap:3px; margin-bottom:10px; }
+.medidor .rotulo{ color:var(--grafite-fraco); margin:0; }
+.medidor .val{ font-size:2.5rem; font-weight:800; letter-spacing:-.045em; color:#fff; line-height:1; }
+.medidor .val small{ font-size:1.1rem; font-weight:700; color:var(--grafite-fraco); letter-spacing:-.02em; }
+.medidor .trilho{ height:6px; background:var(--grafite-3); border-radius:var(--raio-pilula); overflow:hidden; }
+.medidor .trilho i{ display:block; height:100%; background:var(--verde-claro); width:0;
+                    border-radius:var(--raio-pilula); transition:width 900ms var(--saida); }
+.medidor .nota{ font-size:var(--t-xs); color:var(--grafite-fraco); margin:var(--e2) 0 0; max-width:42ch; }
 .medidor.alt .trilho i{ background:var(--ambar); }
 
+table.rel{ width:100%; border-collapse:collapse; font-size:var(--t-sm); margin:0; }
+table.rel th,table.rel td{ border-bottom:1px solid var(--borda); padding:9px 10px; text-align:left; vertical-align:top; }
+table.rel thead th{ background:var(--fundo); font-size:var(--t-cap); text-transform:uppercase; letter-spacing:.07em;
+                    color:var(--tinta-2); border-bottom:1px solid var(--borda-forte); white-space:nowrap; }
+table.rel tbody th{ font-weight:700; white-space:nowrap; background:var(--branco);
+                    position:sticky; left:0; box-shadow:1px 0 0 var(--borda); }
+table.rel td.n{ text-align:right; white-space:nowrap; }
+table.rel tbody tr:last-child th,table.rel tbody tr:last-child td{ border-bottom:0; }
+.rolagem-x{ overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:var(--e3);
+            border:1px solid var(--borda); border-radius:var(--raio); }
+
+/* A frase de fechamento é a tese do jogo. Ela merece ser a última coisa
+   grande da tela, e não mais um cartão com barra colorida na lateral. */
+.tese{ border-top:1px solid var(--borda); border-bottom:1px solid var(--borda);
+       padding:var(--e5) 0; margin:var(--e5) 0; }
+.tese p{ margin:0; font-size:var(--t-lg); font-weight:700; letter-spacing:-.03em;
+         color:var(--verde-texto); max-width:24ch; line-height:1.25; }
+
 textarea.resumo{ width:100%; min-height:190px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-  font-size:.74rem; padding:10px; border:1px solid var(--borda-forte); border-radius:var(--raio); line-height:1.45; background:var(--fundo); color:var(--tinta); }
+  font-size:var(--t-xs); padding:var(--e3); border:1px solid var(--borda-forte); border-radius:var(--raio); line-height:1.5; background:var(--fundo); color:var(--tinta); }
 
 /* ========================= [CSS] RODAPÉ FIXO ============================ */
 #rodape{
   position:fixed; bottom:0; left:0; right:0; z-index:35;
-  background:var(--branco); border-top:1px solid var(--borda);
-  padding:9px 14px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.94); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 -1px 0 var(--borda), var(--sombra-flutua);
+  padding:10px var(--e4) calc(10px + env(safe-area-inset-bottom));
 }
-#rodape .dentro{ max-width:520px; margin:0 auto; display:flex; gap:8px; }
+#rodape .dentro{ max-width:560px; margin:0 auto; display:flex; gap:var(--e2); }
 #rodape .btn{ flex:1; }
 /* ========================= [CSS] TELAS GRANDES ==========================
    O aluno pode estar no computador. Em tela larga o limite deixa de ser a
    largura e passa a ser a ALTURA: o visor é dimensionado pela altura útil
    (em JS, em dimensionar()) e a ficha de inspeção vem para o lado da foto.
+   A coluna da foto é min-content e encolhe até a largura real da imagem —
+   antes ela ficava em 1fr e sobrava uma faixa branca morta ao lado da foto.
    ====================================================================== */
 @media (min-width:920px){
-  #app{ max-width:1120px; }
-  main{ padding:18px 22px 96px; }
+  #app{ max-width:1180px; }
+  main{ padding:var(--e6) var(--e5) 96px; }
   .tela{ max-width:780px; margin:0 auto; }
   .tela.tela-cena{ max-width:none; }
+  .capa{ margin:calc(var(--e6) * -1) calc(var(--e5) * -1) var(--e6); padding:var(--e7) var(--e6); }
+  .capa h1{ font-size:3rem; max-width:18ch; }
   /* A foto ocupa a coluna esquerda inteira; título, cronômetro e ficha vão
      para a direita. Isso devolve à imagem a altura que o cabeçalho da cena
      consumia — decisivo em notebook de 768 px. */
-  .cena-grade{ display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:8px 18px;
-               grid-template-rows:auto 1fr; grid-template-areas:"foto topo" "foto lado"; align-items:start; }
+  .cena-grade{ display:grid; grid-template-columns:min-content minmax(320px,380px); gap:var(--e3) var(--e5);
+               grid-template-rows:auto 1fr; grid-template-areas:"foto topo" "foto lado";
+               align-items:start; justify-content:center; }
   .cena-topo{ grid-area:topo; }
   /* a foto acompanha a rolagem da ficha: sem isso, ler a lista ao lado
      tirava a cena da tela justamente quando ela é a referência. */
-  .col-foto{ grid-area:foto; min-width:0; position:sticky; top:calc(var(--topo) + 12px); align-self:start; }
-  .col-lado{ grid-area:lado; }
+  .col-foto{ grid-area:foto; min-width:0; position:sticky; top:calc(var(--topo) + var(--e3)); align-self:start; }
+  .col-lado{ grid-area:lado; min-width:0; }
   .cena-topo .hud{ margin-bottom:0; }
   .col-lado>details.mais{ margin:0; }
-  .visor-caixa{ margin:0; border-radius:12px; overflow:hidden; }
-  .visor-barra{ padding:8px 10px; }
-  .legenda-sim{ padding:0 10px 8px; }
+  .visor-caixa{ margin:0; border-radius:var(--raio); overflow:hidden; }
+  .visor-barra{ padding:var(--e2) 10px; }
+  .legenda-sim{ padding:0 10px var(--e2); }
   #rodape .dentro{ max-width:780px; }
-  .modal{ max-width:620px; }
-  table.rel{ font-size:.82rem; }
+  .modal{ max-width:640px; padding:var(--e5); }
+  table.rel{ font-size:var(--t-base); }
+  .inventario{ grid-template-columns:repeat(4,minmax(0,1fr)); }
 }
 @media (min-width:1240px){
-  .cena-grade{ grid-template-columns:minmax(0,1fr) 380px; }
+  .cena-grade{ grid-template-columns:min-content 400px; }
 }
 
 .toast{
   position:fixed; left:50%; transform:translateX(-50%); bottom:96px; z-index:95;
-  background:var(--tinta); color:#fff; padding:10px 16px; border-radius:99px;
-  font-size:.82rem; font-weight:700; box-shadow:0 3px 14px rgba(0,0,0,.3); max-width:90vw; text-align:center;
+  background:var(--grafite); color:#fff; padding:11px var(--e4); border-radius:var(--raio-pilula);
+  font-size:var(--t-sm); font-weight:700; box-shadow:var(--sombra-alta); max-width:90vw; text-align:center;
+  animation:sobe 280ms var(--saida);
 }
 </style>
 </head>
@@ -372,19 +607,19 @@ textarea.resumo{ width:100%; min-height:190px; font-family:ui-monospace,SFMono-R
 
   <header id="topo">
     <div class="topo-linha">
-      <span class="marca">BLINDAGEM TOTAL · Cabine Limpa</span>
+      <span class="marca"><b>Blindagem Total</b><span>Cabine Limpa</span></span>
       <div class="topo-acoes">
         <button class="icone-btn" id="btBriefing" type="button" aria-label="Abrir o briefing do caso">
-          <span class="g" aria-hidden="true">&#9432;</span><span>Caso</span>
+          <span class="ico" data-ico="caso" aria-hidden="true"></span><span>Caso</span>
         </button>
         <button class="icone-btn" id="btTexto" type="button" aria-pressed="false" aria-label="Alternar modo textual">
-          <span class="g" aria-hidden="true">&#9776;</span><span>Texto</span>
+          <span class="ico" data-ico="texto" aria-hidden="true"></span><span>Texto</span>
         </button>
         <button class="icone-btn" id="btSom" type="button" aria-pressed="false" aria-label="Alternar som">
-          <span class="g" aria-hidden="true">&#9834;</span><span>Som</span>
+          <span class="ico" id="icoSom" data-ico="mudo" aria-hidden="true"></span><span>Som</span>
         </button>
         <button class="icone-btn" id="btReiniciar" type="button" aria-label="Reiniciar a sessão">
-          <span class="g" aria-hidden="true">&#8635;</span><span>Reiniciar</span>
+          <span class="ico" data-ico="reiniciar" aria-hidden="true"></span><span>Reiniciar</span>
         </button>
       </div>
     </div>
@@ -484,13 +719,13 @@ const BRIEFING = {
    Nem todo elemento de infraestrutura é tecnicamente um EPC.
    ======================================================================== */
 const CAMADAS = {
-  protecao:     { nome:"Proteção individual e vestimenta", curto:"Proteção individual", ic:"\u{1F97D}",
+  protecao:     { nome:"Proteção individual e vestimenta", curto:"Proteção individual", ic:"protecao",
                   desc:"Barreiras que a pessoa veste. Inclui EPI propriamente dito e a vestimenta de trabalho, que a NR-32 trata em item separado do EPI." },
-  comportamento:{ nome:"Comportamento", curto:"Comportamento", ic:"\u{1F464}",
+  comportamento:{ nome:"Comportamento", curto:"Comportamento", ic:"comportamento",
                   desc:"O que a pessoa faz com a barreira que tem. É a camada que nenhum equipamento compensa." },
-  residuos:     { nome:"Resíduos", curto:"Resíduos", ic:"\u{1F5D1}",
+  residuos:     { nome:"Resíduos", curto:"Resíduos", ic:"residuos",
                   desc:"Segregação, acondicionamento e descarte. O perfurocortante fere mais no descarte do que no uso." },
-  estrutura:    { nome:"Estrutura e proteção coletiva", curto:"Estrutura", ic:"\u{1F3E5}",
+  estrutura:    { nome:"Estrutura e proteção coletiva", curto:"Estrutura", ic:"estrutura",
                   desc:"O que o ambiente oferece ou impede. Cuidado: nem toda infraestrutura é um EPC no sentido técnico." }
 };
 
@@ -1287,6 +1522,7 @@ const S = {
   adequados:{},    /* id -> {inspecionado} */
   neutros:{},      /* id -> {inspecionado} */
   pistas:{},       /* cenaId -> nº de pistas usadas */
+  vista:{},        /* cenaId -> {z,tx,ty} da foto, preservado entre repinturas */
   esgotou:{},      /* cenaId -> bool */
   e2:{ cartoes:[], idx:0, resp:{} },
   e3:{ lista:[], idx:0, resp:{}, extras:[] }
@@ -1343,6 +1579,70 @@ function el(tag, attrs, ...kids){
   return n;
 }
 function limpar(n){ while(n.firstChild) n.removeChild(n.firstChild); }
+
+/* Foco na tela nova SEM arrastar a rolagem. focus() comum empurrava o <main>
+   para dentro da janela e escondia o titulo da propria tela sob o cabecalho
+   fixo: toda tela abria ja rolada alguns pixels para baixo. */
+function focarTela(){
+  const m=$("#palco");
+  try{ m.focus({preventScroll:true}); }catch(e){ m.focus(); }
+  window.scrollTo(0,0);
+}
+
+/* ========================================================================
+   [ENGINE] - ICONES
+   Desenhados aqui, numa unica grade de 24 com traco de 1.75. Emoji foi
+   descartado de proposito: o desenho muda de sistema para sistema e o peso
+   nunca bate com o do texto ao lado.
+   ======================================================================== */
+const TRACOS = {
+  seta:      '<path d="M9 5l7 7-7 7"/>',
+  caso:      '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.4h.01"/>',
+  texto:     '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  som:       '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M15.5 9.8a3.4 3.4 0 010 4.4"/><path d="M18 7.5a6.8 6.8 0 010 9"/>',
+  mudo:      '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M16 10l4.5 4.5M20.5 10L16 14.5"/>',
+  reiniciar: '<path d="M3.6 12a8.4 8.4 0 1 0 2.7-6.2"/><path d="M3 4.2v5h5"/>',
+  mais:      '<path d="M12 5.5v13M5.5 12h13"/>',
+  menos:     '<path d="M5.5 12h13"/>',
+  enquadrar: '<path d="M4 9.5V5.6a1.6 1.6 0 011.6-1.6H9.5M14.5 4h3.9A1.6 1.6 0 0120 5.6v3.9M20 14.5v3.9a1.6 1.6 0 01-1.6 1.6h-3.9M9.5 20H5.6A1.6 1.6 0 014 18.4v-3.9"/>',
+  relogio:   '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.2V12l3.2 1.9"/>',
+  pista:     '<path d="M9.6 18.2h4.8M10.4 21h3.2"/><path d="M12 3.2a6 6 0 00-3.6 10.8c.6.5 1 1.1 1.1 1.8l.1.4h4.8l.1-.4c.1-.7.5-1.3 1.1-1.8A6 6 0 0012 3.2z"/>',
+  alerta:    '<path d="M12 4.3L2.7 20.1h18.6L12 4.3z"/><path d="M12 10.2v4M12 17.2h.01"/>',
+  certo:     '<path d="M4.6 12.4l4.9 4.9L19.4 6.7"/>',
+  rever:     '<path d="M3.2 14.4c2.4-4.8 5.3-4.8 7.7-1.9s5.3 2.9 7.7-1.9"/><path d="M20.8 8.6l-2.4 2 3 .5"/>',
+  fechar:    '<path d="M6.2 6.2l11.6 11.6M17.8 6.2L6.2 17.8"/>',
+  olho:      '<path d="M2.2 12S6 5.8 12 5.8 21.8 12 21.8 12 18 18.2 12 18.2 2.2 12 2.2 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  toque:     '<circle cx="12" cy="12" r="2.8"/><path d="M6.9 6.9a7.2 7.2 0 000 10.2M17.1 17.1a7.2 7.2 0 000-10.2"/>',
+  decisao:   '<path d="M12 3.4v6.2"/><path d="M12 9.6L6.2 15v5.6"/><path d="M12 9.6L17.8 15v5.6"/>',
+  protecao:  '<path d="M12 3.2l7.4 2.9v5.4c0 4.3-3 8.1-7.4 9.3-4.4-1.2-7.4-5-7.4-9.3V6.1L12 3.2z"/>',
+  comportamento:'<path d="M9.4 12.4V6.1a1.7 1.7 0 013.4 0v4.5"/><path d="M12.8 10.6V9.2a1.7 1.7 0 013.4 0v3"/><path d="M16.2 12.2v-.8a1.7 1.7 0 013.4 0v4a6 6 0 01-6 6h-1.3a5 5 0 01-3.6-1.5l-3.3-3.4a1.8 1.8 0 012.6-2.5l1.4 1.4"/>',
+  residuos:  '<path d="M3.8 7h16.4"/><path d="M9.4 7V4.7h5.2V7"/><path d="M6.1 7l1 13.3h9.8L17.9 7"/><path d="M10.4 11v5.6M13.6 11v5.6"/>',
+  estrutura: '<path d="M2.8 20.8h18.4"/><path d="M5.2 20.8V6.1L12 3.2l6.8 2.9v14.7"/><path d="M9.6 20.8v-4.9h4.8v4.9"/><path d="M9.6 10.2h1.4M13 10.2h1.4"/>'
+};
+function svgDe(nome){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
+       + 'stroke-linecap="round" stroke-linejoin="round">'+(TRACOS[nome]||"")+'</svg>';
+}
+function ico(nome, classe){
+  return el("span",{class:"ico"+(classe?" "+classe:""),"aria-hidden":"true", html:svgDe(nome)});
+}
+/* Selo: o icone vem do tipo, para que estado nunca dependa so de cor. */
+const ICO_SELO = { ok:"certo", at:"rever", rv:"alerta", inf:"caso", neutro:null };
+function selo(tipo, texto, estilo){
+  const i = (tipo in ICO_SELO) ? ICO_SELO[tipo] : null;
+  return el("span",{class:"selo "+tipo, style:estilo||null}, i?ico(i):null, texto);
+}
+
+/* Aviso: superficie tingida com um icone que diz a natureza do recado sem
+   depender so da cor. O tipo vazio e o ambar, que e o aviso de atencao. */
+const ICO_AVISO = { "":"alerta", info:"caso", bom:"certo", grave:"alerta" };
+function aviso(tipo){
+  const kids=[].slice.call(arguments,1);
+  return el("div",{class:"aviso"+(tipo?" "+tipo:"")},
+    ico(ICO_AVISO[tipo]||"alerta"),
+    el("div",{}, kids)
+  );
+}
 function anunciar(msg){ const a=$("#avisosVivos"); a.textContent=""; setTimeout(()=>a.textContent=msg, 60); }
 
 let toastT=null;
@@ -1384,7 +1684,7 @@ function abrirModal(titulo, construirCorpo, opc){
       el("div",{class:"modal-topo"},
         el("h2",{id:"mdTit",style:"margin:0;flex:1"}, titulo),
         opc.semFechar ? null : el("button",{class:"fechar", type:"button","aria-label":"Fechar",
-          onclick:()=>fecharModal()},"✕")
+          onclick:()=>fecharModal()}, ico("fechar"))
       ),
       corpo
     )
@@ -1470,7 +1770,9 @@ function pintarPassos(){
 }
 function rodape(botoes){
   const r=$("#rodape"), d=$("#rodapeDentro"); limpar(d);
-  if(!botoes || !botoes.length){ r.classList.add("oculto"); return; }
+  const vazio = !botoes || !botoes.length;
+  $("#palco").classList.toggle("sem-rodape", vazio);
+  if(vazio){ r.classList.add("oculto"); return; }
   r.classList.remove("oculto");
   botoes.forEach(b=>d.appendChild(b));
 }
@@ -1483,32 +1785,51 @@ function telaAbertura(){
   const m=$("#palco"); limpar(m);
   const t=el("div",{class:"tela"});
 
-  t.appendChild(el("h1",{},"Blindagem Total: Cabine Limpa"));
-  t.appendChild(el("p",{class:"miudo"},"Auditoria de biossegurança em cabine de estética. Você assume o papel de auditor. Três etapas: inspecionar, conectar as camadas de proteção e decidir diante de dilemas."));
+  /* Capa: um jogo de inspecao fotografica precisa MOSTRAR do que se trata
+     antes de explicar. O fundo e a propria cena 3 do banco, escurecida.
+     Se nenhuma foto estiver embutida, sobra o grafite e a capa segue de pe. */
+  const capa=el("div",{class:"capa"});
+  /* a capa prefere a ultima cena ativa com foto: e o plano mais aberto da
+     cabine, que mostra o ambiente em vez de fechar num rosto. */
+  const comFoto = cenasAtivas().filter(c=>temFoto(c.id));
+  const cenaCapa = comFoto.length ? comFoto[comFoto.length-1] : null;
+  if(cenaCapa) capa.appendChild(el("div",{class:"capa-foto","aria-hidden":"true",
+    style:`background-image:url("${FOTOS[cenaCapa.id]}")`}));
+  capa.appendChild(el("h1",{},"Blindagem Total", el("i",{},"Cabine Limpa")));
+  capa.appendChild(el("p",{},"Auditoria de biosseguran\u00e7a em cabine de est\u00e9tica. Voc\u00ea assume o papel de auditor. Tr\u00eas etapas: inspecionar, conectar as camadas de prote\u00e7\u00e3o e decidir diante de dilemas."));
+  t.appendChild(capa);
 
-  t.appendChild(el("div",{class:"aviso info"},
-    el("p",{},el("b",{},"Duração aproximada: 8 a 12 minutos."),
-      " Depende do seu tempo de leitura e das suas decisões — não é um tempo fixo.")
+  /* Inventario: o que existe dentro desta auditoria, em numeros que saem do
+     banco ativo — nao ha nenhum numero escrito a mao aqui. */
+  const nItens=itensAtivos().length, nCenas=cenasAtivas().length;
+  const nAdq=ADEQUADOS.filter(a=>CONFIG.CENAS_ATIVAS.includes(a.cenaId)).length;
+  const nDil=Math.min(CONFIG.DILEMAS_POR_PARTIDA, DILEMAS.length);
+  function verba(rot, val, nota){
+    return el("div",{}, el("dt",{},rot), el("dd",{}, String(val), nota?el("small",{}," "+nota):null));
+  }
+  t.appendChild(el("dl",{class:"inventario"},
+    verba("Cenas", nCenas, "da mesma cabine"),
+    verba("N\u00e3o conformidades", nItens, "a encontrar"),
+    verba("Elementos adequados", nAdq, "para comparar"),
+    verba("Dilemas", nDil, "de "+DILEMAS.length+" no banco")
   ));
+  t.appendChild(el("p",{class:"miudo-2",style:"margin-bottom:var(--e5)"},
+    "As cenas s\u00e3o enquadramentos complementares da mesma cabine. Os dilemas que n\u00e3o entrarem nesta partida ficam como pr\u00e1tica adicional no relat\u00f3rio."));
 
-  const nItens=itensAtivos().length, nCenas=cenasAtivas().length, nAdq=ADEQUADOS.filter(a=>CONFIG.CENAS_ATIVAS.includes(a.cenaId)).length;
-  t.appendChild(el("div",{class:"cartao suave"},
-    el("div",{class:"rotulo"},"O que há nesta auditoria"),
-    el("ul",{},
-      el("li",{},`${nCenas} cena${nCenas>1?"s":""} da mesma cabine, em enquadramentos complementares`),
-      el("li",{},`${nItens} não conformidades distribuídas entre as cenas`),
-      el("li",{},`${nAdq} elementos adequados, para comparação`),
-      el("li",{},"6 dilemas no banco; 3 por partida, e os demais ficam como prática adicional")
-    )
+  t.appendChild(aviso("info",
+    el("p",{},el("b",{},"Dura\u00e7\u00e3o aproximada: 8 a 12 minutos."),
+      " Depende do seu tempo de leitura e das suas decis\u00f5es \u2014 n\u00e3o \u00e9 um tempo fixo.")
   ));
 
   /* modo de tempo */
   const boxTempo=el("div",{class:"cartao"});
-  boxTempo.appendChild(el("div",{class:"rotulo"},"Tempo de inspeção"));
-  boxTempo.appendChild(el("p",{class:"miudo"},`O cronômetro pausa sozinho durante a leitura do feedback, a escolha de conduta e quando você troca de aba. Ao terminar o tempo nada do que você respondeu é perdido.`));
-  const linhaT=el("div",{class:"btn-linha"});
-  const bComTempo=el("button",{class:"btn sec",type:"button","aria-pressed":String(!S.semTempo)},`Com ${CONFIG.SEGUNDOS_POR_CENA}s por cena`);
-  const bSemTempo=el("button",{class:"btn sec",type:"button","aria-pressed":String(S.semTempo)},"Sem limite de tempo");
+  boxTempo.appendChild(el("div",{class:"rotulo"},"Tempo de inspe\u00e7\u00e3o"));
+  boxTempo.appendChild(el("p",{class:"miudo"},`O cron\u00f4metro pausa sozinho durante a leitura do feedback, a escolha de conduta e quando voc\u00ea troca de aba. Ao terminar o tempo nada do que voc\u00ea respondeu \u00e9 perdido.`));
+  const linhaT=el("div",{class:"par-escolha"});
+  const bComTempo=el("button",{class:"btn sec",type:"button","aria-pressed":String(!S.semTempo)},
+    el("span",{},`Com ${CONFIG.SEGUNDOS_POR_CENA}s por cena`), el("small",{},"pressiona a observa\u00e7\u00e3o"));
+  const bSemTempo=el("button",{class:"btn sec",type:"button","aria-pressed":String(S.semTempo)},
+    el("span",{},"Sem limite de tempo"), el("small",{},"para ler com calma"));
   function sincTempo(){
     bComTempo.setAttribute("aria-pressed",String(!S.semTempo));
     bSemTempo.setAttribute("aria-pressed",String(S.semTempo));
@@ -1523,15 +1844,15 @@ function telaAbertura(){
   /* aviso sobre fotos pendentes */
   const faltando = cenasAtivas().filter(c=>!temFoto(c.id));
   if(faltando.length){
-    t.appendChild(el("div",{class:"aviso"},
-      el("p",{},el("b",{},"Fotografias ainda não incorporadas. "),
-        `${faltando.length} de ${cenasAtivas().length} cena${cenasAtivas().length>1?"s":""} roda${faltando.length===1?"":"m"} pela ficha de inspeção, que é o equivalente textual e permite realizar a atividade inteira. Nada foi desenhado no lugar da foto.`)
+    t.appendChild(aviso("",
+      el("p",{},el("b",{},"Fotografias ainda n\u00e3o incorporadas. "),
+        `${faltando.length} de ${cenasAtivas().length} cena${cenasAtivas().length>1?"s":""} roda${faltando.length===1?"":"m"} pela ficha de inspe\u00e7\u00e3o, que \u00e9 o equivalente textual e permite realizar a atividade inteira. Nada foi desenhado no lugar da foto.`)
     ));
   }
 
-  t.appendChild(el("div",{class:"aviso info"},
-    el("p",{},el("b",{},"Esta sessão vive só na memória do navegador. "),
-      "Recarregar a página reinicia tudo do zero. Não há salvamento, não há envio de dados e nada é gravado no seu aparelho.")
+  t.appendChild(aviso("info",
+    el("p",{},el("b",{},"Esta sess\u00e3o vive s\u00f3 na mem\u00f3ria do navegador. "),
+      "Recarregar a p\u00e1gina reinicia tudo do zero. N\u00e3o h\u00e1 salvamento, n\u00e3o h\u00e1 envio de dados e nada \u00e9 gravado no seu aparelho.")
   ));
 
   if(CONFIG.PAINEL_DOCENTE) t.appendChild(painelDocente());
@@ -1539,14 +1860,14 @@ function telaAbertura(){
   m.appendChild(t);
   rodape([
     el("button",{class:"btn sec",type:"button",onclick:abrirBriefing},"Ler o briefing"),
-    el("button",{class:"btn",type:"button",onclick:()=>{ S.iniciado=true; telaTutorial(); }},"Começar")
+    el("button",{class:"btn",type:"button",onclick:()=>{ S.iniciado=true; telaTutorial(); }},"Come\u00e7ar")
   ]);
-  $("#palco").focus();
+  focarTela();
 }
 
 function painelDocente(){
   const d=el("details",{class:"mais"});
-  d.appendChild(el("summary",{},"Orientação ao docente"));
+  d.appendChild(el("summary",{}, ico("seta"), "Orientação ao docente"));
   const c=el("div");
   c.appendChild(el("p",{class:"miudo"},"Roteiro sugerido para a aula síncrona:"));
   c.appendChild(el("ol",{class:"miudo"},
@@ -1556,7 +1877,7 @@ function painelDocente(){
     el("li",{},"Discutir um dilema: projete um, colete o voto da turma antes de revelar e discuta por que as pessoas escolheram o que escolheram."),
     el("li",{},"Encerrar com uma mudança aplicável: cada pessoa responde ao desafio de transferência do relatório.")
   ));
-  c.appendChild(el("div",{class:"aviso"},
+  c.appendChild(aviso("",
     el("p",{},el("b",{},"O que este arquivo não faz. "),
       "Sem backend, não existe ranking ao vivo, sincronização entre celulares nem painel automático da turma. O compartilhamento do resumo é iniciado pelo aluno, copiando o texto ao final.")
   ));
@@ -1577,7 +1898,7 @@ function abrirBriefing(){
         el("p",{style:"margin:0;font-size:.87rem"},b.t)
       ));
     });
-    c.appendChild(el("div",{class:"aviso info"},
+    c.appendChild(aviso("info",
       el("p",{},el("b",{},"Três naturezas diferentes de regra. "),
         "Ao abrir “Entender melhor” em qualquer achado, você vê se a base é ",
         el("b",{},"exigência normativa"),", ",el("b",{},"recomendação técnica")," ou ",
@@ -1597,41 +1918,39 @@ function telaTutorial(){
   t.appendChild(el("h1",{},"Como inspecionar"));
 
   const foto = cenasAtivas().some(c=>temFoto(c.id));
-  t.appendChild(el("div",{class:"cartao"},
-    el("div",{class:"rotulo"},"1. Observe"),
-    el("p",{style:"margin:0;font-size:.88rem"}, foto
-      ? "Percorra a cena com calma. Use os botões + e − para ampliar e arraste a imagem para mover a área ampliada. Arrastar não conta como resposta: só um toque parado registra."
-      : "Percorra a ficha de inspeção. Cada linha descreve o que está visível, de forma neutra, sem dizer se está certo ou errado.")
-  ));
-  t.appendChild(el("div",{class:"cartao"},
-    el("div",{class:"rotulo"},"2. Toque no que chamou sua atenção"),
-    el("p",{style:"margin:0;font-size:.88rem"},"O jogo diz o que foi observado e explica o risco em poucas linhas. Se você tocar em algo adequado ou em uma região neutra, não há penalidade — o registro é separado.")
-  ));
-  t.appendChild(el("div",{class:"cartao"},
-    el("div",{class:"rotulo"},"3. Escolha a conduta"),
-    el("p",{style:"margin:0;font-size:.88rem"},"Três alternativas plausíveis. O jogo explica a consequência da sua escolha e deixa você corrigir. A primeira resposta fica registrada; a correção completa a blindagem sem apagar o registro inicial.")
-  ));
+  const guia=el("ol",{class:"guia"});
+  function passo(icone, titulo, texto){
+    return el("li",{}, ico(icone), el("div",{}, el("b",{},titulo), el("p",{},texto)));
+  }
+  guia.appendChild(passo("olho","Observe", foto
+    ? "Percorra a cena com calma. Use os bot\u00f5es + e \u2212 para ampliar e arraste a imagem para mover a \u00e1rea ampliada. Arrastar n\u00e3o conta como resposta: s\u00f3 um toque parado registra."
+    : "Percorra a ficha de inspe\u00e7\u00e3o. Cada linha descreve o que est\u00e1 vis\u00edvel, de forma neutra, sem dizer se est\u00e1 certo ou errado."));
+  guia.appendChild(passo("toque","Toque no que chamou sua aten\u00e7\u00e3o",
+    "O jogo diz o que foi observado e explica o risco em poucas linhas. Se voc\u00ea tocar em algo adequado ou em uma regi\u00e3o neutra, n\u00e3o h\u00e1 penalidade \u2014 o registro \u00e9 separado."));
+  guia.appendChild(passo("decisao","Escolha a conduta",
+    "Tr\u00eas alternativas plaus\u00edveis. O jogo explica a consequ\u00eancia da sua escolha e deixa voc\u00ea corrigir. A primeira resposta fica registrada; a corre\u00e7\u00e3o completa a blindagem sem apagar o registro inicial."));
+  t.appendChild(guia);
 
   t.appendChild(el("div",{class:"cartao suave"},
     el("div",{class:"rotulo"},"Duas medidas diferentes"),
-    el("p",{style:"font-size:.86rem"},el("b",{},"Percepção inicial"),": o que você encontrou sozinho, antes da revisão guiada. Separa achados sem pista dos achados com pista."),
-    el("p",{style:"margin:0;font-size:.86rem"},el("b",{},"Blindagem da simulação"),": metade por identificar, metade por escolher a conduta certa. Inclui o que você aprendeu depois. Não é a segurança real de nenhuma clínica.")
+    el("p",{style:"font-size:var(--t-base)"},el("b",{},"Percep\u00e7\u00e3o inicial"),": o que voc\u00ea encontrou sozinho, antes da revis\u00e3o guiada. Separa achados sem pista dos achados com pista."),
+    el("p",{style:"margin:0;font-size:var(--t-base)"},el("b",{},"Blindagem da simula\u00e7\u00e3o"),": metade por identificar, metade por escolher a conduta certa. Inclui o que voc\u00ea aprendeu depois. N\u00e3o \u00e9 a seguran\u00e7a real de nenhuma cl\u00ednica.")
   ));
 
   if(CONFIG.PISTAS_POR_CENA>0){
-    t.appendChild(el("div",{class:"aviso"},
+    t.appendChild(aviso("",
       el("p",{},el("b",{},`${CONFIG.PISTAS_POR_CENA} pistas por cena. `),
-        "A primeira sugere uma região; a segunda, o mecanismo de risco. O uso fica registrado e não retira nada do que você já conquistou.")
+        "A primeira sugere uma regi\u00e3o; a segunda, o mecanismo de risco. O uso fica registrado e n\u00e3o retira nada do que voc\u00ea j\u00e1 conquistou.")
     ));
   }
-  t.appendChild(el("p",{class:"miudo-2"},"Não há pontos por velocidade. O que conta é a qualidade da observação e da decisão."));
+  t.appendChild(el("p",{class:"miudo-2"},"N\u00e3o h\u00e1 pontos por velocidade. O que conta \u00e9 a qualidade da observa\u00e7\u00e3o e da decis\u00e3o."));
 
   m.appendChild(t);
   rodape([
     el("button",{class:"btn neutro",type:"button",onclick:telaAbertura},"Voltar"),
-    el("button",{class:"btn",type:"button",onclick:()=>{ S.idxCena=0; telaCena(); }},"Iniciar a inspeção")
+    el("button",{class:"btn",type:"button",onclick:()=>{ S.idxCena=0; telaCena(); }},"Iniciar a inspe\u00e7\u00e3o")
   ]);
-  $("#palco").focus();
+  focarTela();
 }
 
 /* ========================================================================
@@ -1673,9 +1992,9 @@ function jaVisto(id){ return !!estadoAlvo(id); }
    [ENGINE] — CRONÔMETRO
    Pausa na leitura de feedback, na escolha de conduta e com a aba oculta.
    ======================================================================== */
-let cronoId=null, cronoSeg=0, cronoPausas=new Set(), cronoEl=null, cronoAtivo=false;
+let cronoId=null, cronoSeg=0, cronoTotal=0, cronoPausas=new Set(), cronoEl=null, cronoAtivo=false;
 function iniciarCrono(seg){
-  pararCrono(); cronoSeg=seg; cronoPausas.clear(); cronoAtivo=true;
+  pararCrono(); cronoSeg=seg; cronoTotal=seg; cronoPausas.clear(); cronoAtivo=true;
   pintarCrono(); tickar();
 }
 function tickar(){
@@ -1697,8 +2016,13 @@ function pintarCrono(){
   const pausado=cronoPausas.size>0;
   cronoEl.className="crono"+(pausado?" pausado":(mm<=15?" baixo":""));
   limpar(cronoEl);
-  cronoEl.appendChild(el("span",{"aria-hidden":"true"}, pausado?"⏸":"⏱"));
-  cronoEl.appendChild(el("span",{}, pausado ? "pausado" : `${String(Math.floor(mm/60)).padStart(1,"0")}:${String(mm%60).padStart(2,"0")}`));
+  /* O trilho esvazia junto com o número: quanto resta é uma informação
+     periférica, que o aluno lê sem tirar os olhos da fotografia. */
+  const resta = cronoTotal ? Math.max(0, Math.min(1, mm/cronoTotal)) : 0;
+  cronoEl.appendChild(el("div",{class:"linha"},
+    ico("relogio"),
+    el("span",{}, pausado ? "pausado" : `${String(Math.floor(mm/60)).padStart(1,"0")}:${String(mm%60).padStart(2,"0")}`)));
+  cronoEl.appendChild(el("div",{class:"trilho-t"}, el("i",{style:`width:${(resta*100).toFixed(1)}%`})));
 }
 document.addEventListener("visibilitychange",()=>{
   if(document.hidden) pausarCrono("aba"); else retomarCrono("aba");
@@ -1718,21 +2042,23 @@ function telaCena(){
   const cenaTopo=el("div",{class:"cena-topo"});
 
   /* cabeçalho da cena */
-  cenaTopo.appendChild(el("div",{style:"display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px"},
-    el("h1",{style:"margin:0;font-size:1.12rem;flex:1"},`Cena ${cena.ordem} — ${cena.nome}`),
-    el("span",{class:"selo neutro"},`${cena.ordem} de ${cenasAtivas().length}`)
+  cenaTopo.appendChild(el("div",{class:"tit-cena"},
+    el("h1",{},`Cena ${cena.ordem} — ${cena.nome}`),
+    selo("neutro",`${cena.ordem} de ${cenasAtivas().length}`)
   ));
 
   /* HUD: cronômetro + contador + pista */
   const hud=el("div",{class:"hud"});
   cronoEl=el("div",{class:"crono oculto","aria-live":"off"});
   hud.appendChild(cronoEl);
-  const cont=el("span",{class:"contador",id:"contCena"});
+  const cont=el("div",{class:"contador",id:"contCena",role:"status"});
   hud.appendChild(cont);
   if(CONFIG.PISTAS_POR_CENA>0){
+    const usadas=S.pistas[cena.id]||0;
     hud.appendChild(el("button",{class:"btn sec",type:"button",id:"btPista",
-      style:"padding:6px 14px;font-size:.78rem;flex:0 0 auto",
-      onclick:()=>usarPista(cena)},"Pista"));
+      style:"min-height:38px;padding:6px 13px;font-size:var(--t-sm);flex:0 0 auto",
+      onclick:()=>usarPista(cena)}, ico("pista","ico-sm"),
+      usadas>=CONFIG.PISTAS_POR_CENA ? "Pistas usadas" : `Pista ${usadas+1}/${CONFIG.PISTAS_POR_CENA}`));
   }
   cenaTopo.appendChild(hud);
 
@@ -1763,16 +2089,28 @@ function telaCena(){
 
   if(!S.semTempo && !S.esgotou[cena.id]) iniciarCrono(CONFIG.SEGUNDOS_POR_CENA);
   else { pararCrono(); pintarCrono(); }
-  $("#palco").focus();
+  focarTela();
 }
 
+/* Contagem da cena: uma marca por item, preenchida conforme o item sai do
+   anonimato. Vermelho = identificado; verde = já com conduta adequada. As
+   marcas não dizem ONDE estão os itens, só quantos faltam — o mesmo que o
+   texto dizia, num formato que se lê de relance. */
 function atualizarContador(cena){
   const c=$("#contCena"); if(!c) return;
   const its=itensDaCena(cena.id);
   const ach=its.filter(i=>leReg(i.id).identificado).length;
   const trat=its.filter(i=>leReg(i.id).resolvido).length;
   limpar(c);
-  c.appendChild(el("span",{},`Cena: ${ach}/${its.length} identificados · ${trat}/${its.length} com conduta`));
+  const marcas=el("div",{class:"pips","aria-hidden":"true"});
+  its.forEach(i=>{
+    const r=leReg(i.id);
+    marcas.appendChild(el("i",{class: r.resolvido?"trat" : (r.identificado?"ident":"")}));
+  });
+  c.appendChild(el("span",{}, `${ach}/${its.length} achados`,
+    el("i",{class:"so-largo"}, ` · ${trat} com conduta`)));
+  c.appendChild(marcas);
+  c.setAttribute("aria-label",`${ach} de ${its.length} itens identificados nesta cena, ${trat} com conduta definida.`);
 }
 
 function pintarRodapeCena(cena){
@@ -1825,9 +2163,18 @@ function montarVisor(cena){
   /* alvos agrupados: uma vista ampliada, sem áreas sobrepostas */
   (cena.grupos||[]).forEach(g=>palco.appendChild(botaoGrupo(g, cena)));
 
+  /* Marcas de canto: dizem "isto e um enquadramento", que e exatamente o que
+     a etapa pede. Ficam nos cantos, onde nao ha alvo mapeado, e nao recebem
+     ponteiro — nao roubam nenhum toque. */
+  visor.appendChild(el("div",{class:"visor-marcas","aria-hidden":"true"},
+    el("span",{}), el("span",{}), el("span",{}), el("span",{})));
   visor.appendChild(palco);
 
-  let z=1, tx=0, ty=0;
+  /* A ampliacao sobrevive ao repintar da cena. Antes, abrir e fechar um achado
+     devolvia a foto a visao geral: quem estava examinando o rosto de perto
+     perdia o enquadramento a cada item. */
+  const vista = S.vista[cena.id] || (S.vista[cena.id]={z:1,tx:0,ty:0});
+  let z=vista.z, tx=vista.tx, ty=vista.ty;
   const ptrs=new Map(); let arrastou=false, mexeu=false, capturado=null, dist0=0, z0=1, mid0=null;
 
   function limites(){
@@ -1837,6 +2184,7 @@ function montarVisor(cena){
   }
   function aplicar(){
     limites();
+    vista.z=z; vista.tx=tx; vista.ty=ty;
     palco.style.transform=`translate(${tx}px,${ty}px) scale(${z})`;
     /* O alvo NÃO fica travado em tamanho de tela: ampliar precisa facilitar o
        toque, senão ampliar não serve para nada. Cresce com a raiz da
@@ -1844,9 +2192,18 @@ function montarVisor(cena){
     palco.style.setProperty("--iz", String(Math.pow(z,-0.5)));
     btMenos.disabled = z<=Z_MIN+0.001;
     btMais.disabled  = z>=Z_MAX-0.001;
-    info.textContent = z>1.01
-      ? `${z.toFixed(1)}× · arraste para mover`
-      : (matchMedia("(pointer:fine)").matches ? "Clique para inspecionar · roda amplia" : "Toque para inspecionar");
+    /* "Visao geral" nao tem o que restaurar enquanto a cena esta inteira na
+       tela: o botao aparece quando passa a servir, e a barra estreita deixa
+       de quebrar em duas linhas no caminho. */
+    btReset.classList.toggle("oculto", z<=Z_MIN+0.001);
+    limpar(info);
+    if(z>1.01){
+      info.appendChild(el("b",{class:"zoom-leitura"}, z.toFixed(1)+"×"));
+      info.appendChild(document.createTextNode(" · arraste para mover"));
+    }else{
+      info.appendChild(document.createTextNode(
+        matchMedia("(pointer:fine)").matches ? "Clique para inspecionar · roda amplia" : "Toque para inspecionar"));
+    }
   }
   function zoomEm(nz, px, py){
     nz=Math.min(Z_MAX,Math.max(Z_MIN,nz));
@@ -1928,21 +2285,26 @@ function montarVisor(cena){
   },true);
 
   const btMais=el("button",{class:"zbtn",type:"button","aria-label":"Ampliar",
-    onclick:()=>zoomEm(z+0.6, visor.clientWidth/2, visor.clientHeight/2)},"+");
+    onclick:()=>zoomEm(z+0.6, visor.clientWidth/2, visor.clientHeight/2)}, ico("mais"));
   const btMenos=el("button",{class:"zbtn",type:"button","aria-label":"Reduzir",
-    onclick:()=>zoomEm(z-0.6, visor.clientWidth/2, visor.clientHeight/2)},"−");
+    onclick:()=>zoomEm(z-0.6, visor.clientWidth/2, visor.clientHeight/2)}, ico("menos"));
   const btReset=el("button",{class:"zbtn",type:"button","aria-label":"Voltar à visão geral",
-    style:"font-size:.72rem;padding:0 10px",onclick:()=>{ z=1; tx=0; ty=0; aplicar(); anunciar("Visão geral restaurada."); }},"Visão geral");
+    onclick:()=>{ z=1; tx=0; ty=0; aplicar(); anunciar("Visão geral restaurada."); }},
+    ico("enquadrar","ico-sm"), el("span",{},"Visão geral"));
   const info=el("span",{class:"info"},"Toque para inspecionar");
 
   const barra=el("div",{class:"visor-barra"}, btMenos, btMais, btReset, info);
 
   /* Roda do mouse amplia no ponto do cursor — esperado em um visor de
-     inspeção no computador. */
+     inspeção no computador. Mas só engole a rolagem ENQUANTO houver o que
+     ampliar: no limite de baixo ou de cima a roda volta a rolar a página.
+     Sem isso o visor prendia o cursor e a página não descia mais. */
   visor.addEventListener("wheel",e=>{
+    const alvoZ = Math.min(Z_MAX, Math.max(Z_MIN, z*(e.deltaY<0?1.2:1/1.2)));
+    if(Math.abs(alvoZ-z) < 0.001) return;   /* nada a ampliar: a página rola */
     e.preventDefault();
     const r=visor.getBoundingClientRect();
-    zoomEm(z*(e.deltaY<0?1.2:1/1.2), e.clientX-r.left, e.clientY-r.top);
+    zoomEm(alvoZ, e.clientX-r.left, e.clientY-r.top);
   },{passive:false});
 
   /* Teclado: + e - ampliam, 0 volta à visão geral, setas movem. */
@@ -1972,24 +2334,38 @@ function montarVisor(cena){
      altura e não caberia na tela do computador. */
   function dimensionar(){
     const r = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth/img.naturalHeight : 0.75;
-    const pai = caixa.parentElement;
-    const cw = (pai ? pai.clientWidth : 0) || visor.clientWidth || 360;
-    let w = cw;
     if(window.innerWidth>=920){
-      /* mede o que realmente sobra: o topo da caixa no documento, mais a
-         barra de zoom, a legenda e o rodapé fixo. Assim a cena inteira cabe
-         sem rolagem em qualquer altura de janela, sem número chutado. */
-      const topoDoc = caixa.getBoundingClientRect().top + window.scrollY;
-      const rodape = document.getElementById("rodape");
-      const extras = (barra.offsetHeight||56) + (legenda.offsetHeight||26)
-                   + ((rodape && !rodape.classList.contains("oculto")) ? rodape.offsetHeight : 0) + 18;
-      const alturaUtil = Math.max(280, window.innerHeight - topoDoc - extras);
-      /* piso: nunca menor que 380 px de largura, para a inspeção não piorar
-         no computador em relação ao celular. Se isso exigir rolar alguns
-         pixels numa janela muito baixa, rolar é o mal menor. */
-      w = Math.max(Math.min(cw, 380), Math.min(cw, alturaUtil*r));
+      /* Largura disponível: a grade inteira menos a coluna da ficha e o vão
+         entre elas. NÃO se mede o pai — a coluna da foto é min-content e o
+         pai passou a valer o que esta função acabou de escrever, o que
+         realimentava a medida a cada chamada e encolhia a foto. */
+      const grade = caixa.closest(".cena-grade");
+      const lado  = grade ? grade.querySelector(".col-lado") : null;
+      const vao   = 24;
+      const dispW = (grade && lado) ? Math.max(280, grade.clientWidth - lado.offsetWidth - vao)
+                                    : (visor.clientWidth || 380);
+      /* Altura disponível: da posição natural da grade (que NÃO é sticky, logo
+         a medida vale em qualquer rolagem) até o topo do rodapé fixo, menos a
+         barra de zoom e a legenda. */
+      const topoDoc = (grade || caixa).getBoundingClientRect().top + window.scrollY;
+      const rodapeEl = document.getElementById("rodape");
+      const altRodape = (rodapeEl && !rodapeEl.classList.contains("oculto")) ? rodapeEl.offsetHeight : 0;
+      const extras = (barra.offsetHeight||56) + (legenda.offsetHeight||24) + 14;
+      const alturaUtil = Math.max(240, window.innerHeight - altRodape - topoDoc - extras);
+      /* A largura que faz a cena INTEIRA caber, controles inclusive. Antes
+         havia um piso de 380 px aqui, e num notebook de 768 px ele empurrava a
+         barra de zoom para baixo do rodapé fixo — onde a coluna grudada
+         impedia de chegar, porque sticky prende o topo e o resto some. Agora
+         o piso é 320 px e, se nem ele couber, a coluna deixa de acompanhar a
+         rolagem para que os controles continuem alcançáveis. */
+      const ideal = alturaUtil * r;
+      const w = Math.min(dispW, Math.max(320, ideal));
       caixa.style.width = Math.round(w)+"px";
-      caixa.style.marginLeft = "auto"; caixa.style.marginRight = "auto";
+      caixa.style.marginLeft = "0"; caixa.style.marginRight = "0";
+      visor.style.width = Math.round(w)+"px";
+      const col = caixa.parentElement;
+      if(col && col.classList.contains("col-foto")) col.style.position = (ideal >= 320) ? "" : "static";
+      return;
     }else{
       /* no celular quem manda é o CSS: width 100% dentro da caixa sangrada
          até a borda da tela. Forçar largura aqui encolhia a foto e deixava
@@ -1998,7 +2374,6 @@ function montarVisor(cena){
       visor.style.width="";
       return;
     }
-    visor.style.width = Math.round(w)+"px";
   }
 
   /* um único ouvinte global de redimensionamento, apontado para o visor vivo:
@@ -2014,7 +2389,7 @@ function montarVisor(cena){
 function fichaLateral(cena){
   const det=el("details",{class:"mais"});
   if(window.innerWidth>=920) det.setAttribute("open","");
-  det.appendChild(el("summary",{},"Ficha de inspeção desta cena"));
+  det.appendChild(el("summary",{}, ico("seta"), "Ficha de inspeção desta cena"));
   const dc=el("div");
   dc.appendChild(el("p",{class:"miudo-2"},"Descrições neutras do que está visível e dos dados que a fotografia não permite concluir. Não revela o julgamento."));
   dc.appendChild(montarFicha(cena, true));
@@ -2028,7 +2403,7 @@ window.addEventListener("orientationchange",()=>{ if(aplicarVisorAtual) setTimeo
 function botaoAlvo(id, hs, cena){
   const est=estadoAlvo(id), E=ESTADOS[est];
   const alv=alvoPorId(id);
-  const b=el("button",{class:"alvo "+(E?E.cls:""), type:"button",
+  const b=el("button",{class:"alvo "+(E?E.cls:""), type:"button", "data-alvo":id,
     style:`left:${(hs.x*100).toFixed(2)}%; top:${(hs.y*100).toFixed(2)}%`,
     "aria-label": est ? `${alv.d.item}. ${E.txt}. Tocar para reabrir a explicação.`
                       : `Inspecionar região: ${alv.d.ondeEsta}.`,
@@ -2054,7 +2429,7 @@ function abrirGrupo(g, cena){
       const b=el("button",{class:"ficha-item "+(E?E.cls:""),type:"button",onclick:()=>{ fecharModal(true); inspecionar(id, cena); }},
         el("span",{class:"loc"},a.d.ondeEsta),
         el("span",{}, descricaoNeutra(a)),
-        E?el("span",{class:"est"}, el("span",{class:"selo "+seloDe(est)}, E.ic+" "+E.txt)):null
+        E?el("span",{class:"est"}, selo(seloDe(est), E.txt)):null
       );
       c.appendChild(b);
     });
@@ -2076,7 +2451,7 @@ function montarFicha(cena, embutida){
   const env=el("div");
   if(!embutida){
     if(!temFoto(cena.id)){
-      env.appendChild(el("div",{class:"aviso"},
+      env.appendChild(aviso("",
         el("p",{},el("b",{},"Fotografia desta cena ainda não incorporada. "),
           "A inspeção segue pela ficha, que é o equivalente textual completo. Nenhum desenho foi colocado no lugar da foto.")));
     }
@@ -2094,7 +2469,7 @@ function montarFicha(cena, embutida){
       onclick:()=>inspecionar(a.d.id, cena)},
       el("span",{class:"loc"}, a.d.ondeEsta),
       el("span",{}, descricaoNeutra(a)),
-      E?el("span",{class:"est"}, el("span",{class:"selo "+seloDe(est)}, E.ic+" "+E.txt)):null
+      E?el("span",{class:"est"}, selo(seloDe(est), E.txt)):null
     ));
   });
   return env;
@@ -2114,7 +2489,7 @@ function usarPista(cena){
   const nivel=usadas+1;
   abrirModal(`Pista ${nivel} de ${CONFIG.PISTAS_POR_CENA}`,(c)=>{
     c.appendChild(el("p",{class:"miudo"}, nivel===1 ? "Esta pista indica uma região." : "Esta pista indica o mecanismo de risco."));
-    c.appendChild(el("div",{class:"aviso info"}, el("p",{}, alvo.pistas[Math.min(nivel-1, alvo.pistas.length-1)])));
+    c.appendChild(aviso("info", el("p",{}, alvo.pistas[Math.min(nivel-1, alvo.pistas.length-1)])));
     c.appendChild(el("p",{class:"miudo-2"},"O uso da pista fica registrado no relatório e não retira nada do que você já conquistou. Itens encontrados com pista aparecem separados dos encontrados sozinho."));
   });
   const bt=$("#btPista");
@@ -2134,7 +2509,7 @@ function inspecionar(id, cena){
 function inspecionarNeutro(n){
   if(!S.neutros[n.id]){ S.neutros[n.id]={inspecionado:true}; bip("neutro"); }
   abrirModal(n.item,(c)=>{
-    c.appendChild(el("span",{class:"selo inf"},"i Elemento inspecionado"));
+    c.appendChild(selo("inf","Elemento inspecionado"));
     c.appendChild(el("div",{class:"cartao suave",style:"margin-top:10px"},
       el("div",{class:"rotulo"},"O que foi observado"),
       el("p",{style:"margin:0;font-size:.88rem"}, n.nota)));
@@ -2146,7 +2521,7 @@ function inspecionarAdequado(a){
   const novo=!S.adequados[a.id];
   if(novo){ S.adequados[a.id]={inspecionado:true}; bip("ok"); }
   abrirModal(a.item,(c)=>{
-    c.appendChild(el("span",{class:"selo ok"},"✓ Elemento adequado neste cenário"));
+    c.appendChild(selo("ok","Elemento adequado neste cenário"));
     c.appendChild(el("div",{class:"cartao suave",style:"margin-top:10px"},
       el("div",{class:"rotulo"},"O que foi observado"),
       el("p",{style:"margin:0;font-size:.88rem"}, a.observado)));
@@ -2156,7 +2531,7 @@ function inspecionarAdequado(a){
     c.appendChild(el("div",{class:"cartao"},
       el("div",{class:"rotulo"},"Condições que precisam ser mantidas"),
       el("p",{style:"margin:0;font-size:.88rem"}, a.condicoesManter)));
-    c.appendChild(el("div",{class:"aviso"},
+    c.appendChild(aviso("",
       el("p",{},el("b",{},"Cuidado com a conclusão fácil. "), a.naoConcluir)));
     c.appendChild(el("p",{class:"miudo-2"},"Inspecionar um elemento adequado não gera penalidade: o registro aparece separado no relatório."));
   },{aoFechar:()=>{ if(refPintarCena) refPintarCena(); }});
@@ -2165,15 +2540,29 @@ function inspecionarAdequado(a){
 function inspecionarItem(it, cena){
   const r=regDe(it.id);
   const primeiraVez=!r.identificado;
-  if(primeiraVez){
-    r.identificado=true;
-    r.comPista = !!it._pistaDada;
-    r.naRevisao = !!S.emRevisao;
-    bip("rever");
-    anunciar(`Risco identificado: ${it.item}.`);
-  }
-  abrirModal(it.item,(c)=>{ corpoDoItem(c, it, cena); },
+  const abrir=()=>abrirModal(it.item,(c)=>{ corpoDoItem(c, it, cena); },
     {aoFechar:()=>{ if(refPintarCena) refPintarCena(); if(cena) atualizarContador(cena); pintarPassos(); }});
+  if(!primeiraVez){ abrir(); return; }
+
+  r.identificado=true;
+  r.comPista = !!it._pistaDada;
+  r.naRevisao = !!S.emRevisao;
+  bip("rever");
+  anunciar(`Risco identificado: ${it.item}.`);
+
+  /* O achado precisa acontecer NA CENA, não apenas dentro do diálogo: o pino
+     nasce sobre a fotografia, um anel abre a partir dele e só então o
+     diálogo sobe. É o único movimento autoral da Etapa 1. Com
+     prefers-reduced-motion o desvio desaparece e o diálogo abre direto. */
+  if(refPintarCena) refPintarCena();
+  if(cena) atualizarContador(cena);
+  pintarPassos();
+  const alv=document.querySelector('.alvo[data-alvo="'+it.id+'"]');
+  const semMovimento = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(!alv || semMovimento){ abrir(); return; }
+  alv.classList.add("pulsa");
+  setTimeout(()=>alv.classList.remove("pulsa"), 700);
+  setTimeout(abrir, 210);
 }
 
 function corpoDoItem(c, it, cena){
@@ -2181,10 +2570,10 @@ function corpoDoItem(c, it, cena){
   const r=leReg(it.id);
   const est=estadoAlvo(it.id), E=ESTADOS[est];
   c.appendChild(el("div",{style:"display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"},
-    el("span",{class:"selo "+seloDe(est)}, (E?E.ic+" "+E.txt:"")),
-    it.requerInterrupcao ? el("span",{class:"selo rv"},"⚠ Exige interromper o atendimento") : null,
-    r.comPista ? el("span",{class:"selo neutro"},"encontrado com pista") : null,
-    r.naRevisao ? el("span",{class:"selo neutro"},"visto na revisão") : null
+    (E?selo(seloDe(est), E.txt):null),
+    it.requerInterrupcao ? selo("rv","Exige interromper o atendimento") : null,
+    r.comPista ? selo("neutro","encontrado com pista") : null,
+    r.naRevisao ? selo("neutro","visto na revisão") : null
   ));
 
   /* 1. O que foi observado */
@@ -2208,10 +2597,10 @@ function corpoDoItem(c, it, cena){
         el("span",{class:"letra"},"ABC"[i]+")"), txt));
     });
   }else{
-    c.appendChild(el("div",{class:"aviso bom"},
+    c.appendChild(aviso("bom",
       el("p",{},el("b",{},"Conduta escolhida: "), it.alternativasDeConduta[it.condutaCorreta]),
       el("p",{style:"margin:0"}, it.feedbackPorAlternativa[it.condutaCorreta].texto)));
-    c.appendChild(el("div",{class:"aviso info"},
+    c.appendChild(aviso("info",
       el("p",{style:"margin:0"},el("b",{},"O marcador é da simulação. "),
         "A fotografia não foi corrigida: ela continua mostrando a mesma cena. O que mudou foi o seu registro de auditoria.")));
   }
@@ -2230,10 +2619,10 @@ function responderConduta(c, it, escolha, cena){
   else { bip("rever"); anunciar("Conduta a rever."); }
 
   limpar(c);
-  c.appendChild(el("div",{class:"aviso "+(certa?"bom":(fb.tipo==="insuficiente"?"":"grave"))},
+  c.appendChild(aviso(certa?"bom":(fb.tipo==="insuficiente"?"":"grave"),
     el("p",{},
-      el("span",{class:"selo "+(certa?"ok":(fb.tipo==="insuficiente"?"at":"rv"))},
-        certa?"✓ Conduta adequada":(fb.tipo==="insuficiente"?"~ Insuficiente":"✕ Conduta a rever"))),
+      selo(certa?"ok":(fb.tipo==="insuficiente"?"at":"rv"),
+        certa?"Conduta adequada":(fb.tipo==="insuficiente"?"Insuficiente":"Conduta a rever"))),
     el("p",{style:"margin:.5em 0 0;font-size:.88rem"}, el("b",{},"Você escolheu: "), it.alternativasDeConduta[escolha]),
     el("p",{style:"margin:.5em 0 0;font-size:.88rem"}, fb.texto)
   ));
@@ -2247,7 +2636,7 @@ function responderConduta(c, it, escolha, cena){
         el("span",{class:"letra"},"ABC"[i]+")"), txt));
     });
   }else{
-    c.appendChild(el("div",{class:"aviso info"},
+    c.appendChild(aviso("info",
       el("p",{style:"margin:0"},el("b",{},"O marcador é da simulação. "),
         "A fotografia não foi corrigida — ela continua mostrando a mesma cena. O que mudou foi o seu registro de auditoria.")));
   }
@@ -2260,7 +2649,7 @@ function responderConduta(c, it, escolha, cena){
 
 function blocoEntenderMelhor(it){
   const d=el("details",{class:"mais"});
-  d.appendChild(el("summary",{},"Entender melhor"));
+  d.appendChild(el("summary",{}, ico("seta"), "Entender melhor"));
   const c=el("div");
   c.appendChild(el("div",{class:"rotulo"},"O que fazer"));
   c.appendChild(el("p",{}, it.oQueFazerCerto));
@@ -2279,7 +2668,7 @@ const ROTULO_TIPO = {
 function baseTecnicaHTML(bt, camadaP, rel){
   const w=el("div",{class:"cartao suave",style:"margin-top:10px"});
   const RT=ROTULO_TIPO[bt.tipo]||ROTULO_TIPO["recomendacao-tecnica"];
-  w.appendChild(el("div",{style:"margin-bottom:8px"}, el("span",{class:"selo "+RT.s}, RT.t)));
+  w.appendChild(el("div",{style:"margin-bottom:8px"}, selo(RT.s, RT.t)));
   w.appendChild(el("div",{class:"rotulo"},"Documento"));
   w.appendChild(el("p",{style:"font-size:.82rem"}, bt.documento, bt.orgao?el("span",{class:"miudo-2"}," — "+bt.orgao):null));
   if(bt.trecho){
@@ -2390,16 +2779,16 @@ function telaEtapa2(){
   const it=S.e2.cartoes[S.e2.idx];
   const r=S.itens[it.id];
 
-  t.appendChild(el("h1",{style:"font-size:1.1rem"},"Etapa 2 — Conectar as camadas"));
+  t.appendChild(el("h1",{},"Etapa 2 — Conectar as camadas"));
   t.appendChild(el("p",{class:"miudo"},"Prática orientada. Você já recebeu a explicação de cada item na Etapa 1; aqui o exercício é de classificação. O resultado desta etapa não é lido como um diagnóstico à parte."));
   t.appendChild(el("div",{class:"hud"},
     el("span",{class:"contador"},`Cartão ${S.e2.idx+1} de ${total}`)));
 
   const cartao=el("div",{class:"cartao"});
   cartao.appendChild(el("div",{style:"display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"},
-    (!r || !r.identificado) ? el("span",{class:"selo at"},"⚠ Não encontrado na inspeção") : null,
-    (r && r.comPista) ? el("span",{class:"selo neutro"},"encontrado com pista") : null,
-    (r && r.naRevisao) ? el("span",{class:"selo neutro"},"visto na revisão") : null
+    (!r || !r.identificado) ? selo("at","Não encontrado na inspeção") : null,
+    (r && r.comPista) ? selo("neutro","encontrado com pista") : null,
+    (r && r.naRevisao) ? selo("neutro","visto na revisão") : null
   ));
   cartao.appendChild(el("h2",{style:"font-size:1rem;margin-bottom:6px"}, it.item));
   cartao.appendChild(el("p",{class:"miudo",style:"margin:0"}, it.evidenciaObservavel));
@@ -2409,14 +2798,14 @@ function telaEtapa2(){
   const grade=el("div",{class:"grade-camadas"});
   Object.keys(CAMADAS).forEach(k=>{
     grade.appendChild(el("button",{class:"camada-btn",type:"button",onclick:()=>responderCamada(it,k)},
-      el("span",{}, el("span",{class:"ic","aria-hidden":"true"}, CAMADAS[k].ic), CAMADAS[k].curto)));
+      ico(CAMADAS[k].ic), el("span",{}, CAMADAS[k].curto)));
   });
   t.appendChild(grade);
   t.appendChild(el("p",{class:"miudo-2",style:"margin-top:10px"},"As quatro camadas são uma organização didática, não uma taxonomia oficial. Vários itens se relacionam com mais de uma — associações alternativas previstas no banco são aceitas, com justificativa."));
 
   m.appendChild(t);
   rodape([]);
-  $("#palco").focus();
+  focarTela();
 }
 function responderCamada(it, escolha){
   const principal = escolha===it.camadaPrincipal;
@@ -2425,9 +2814,9 @@ function responderCamada(it, escolha){
   bip(principal||alternativa ? "ok" : "rever");
 
   abrirModal(it.item,(c)=>{
-    const selo = principal ? el("span",{class:"selo ok"},"✓ Camada principal")
-              : alternativa ? el("span",{class:"selo at"},"~ Associação alternativa aceita")
-              : el("span",{class:"selo rv"},"✕ Camada a rever");
+    const selo = principal ? selo("ok","Camada principal")
+              : alternativa ? selo("at","Associação alternativa aceita")
+              : selo("rv","Camada a rever");
     c.appendChild(el("div",{style:"margin-bottom:10px"}, selo));
 
     if(principal){
@@ -2439,7 +2828,7 @@ function responderCamada(it, escolha){
       c.appendChild(el("p",{},`A camada mais diretamente envolvida é ${CAMADAS[it.camadaPrincipal].nome}. ${CAMADAS[it.camadaPrincipal].desc}`));
     }
     if(it.camadasRelacionadas.length){
-      c.appendChild(el("div",{class:"aviso info"},
+      c.appendChild(aviso("info",
         el("p",{style:"margin:0"},el("b",{},"Relação entre camadas. "),
           `Este item também toca ${it.camadasRelacionadas.map(x=>CAMADAS[x].nome).join(" e ")}. `+
           "Camadas não são caixas estanques: a falha atravessa mais de uma.")));
@@ -2456,7 +2845,7 @@ function telaEtapa2Fecho(){
   const rs=Object.values(S.e2.resp);
   const ok=rs.filter(r=>r.principal).length, alt=rs.filter(r=>r.alternativa).length;
 
-  t.appendChild(el("h1",{style:"font-size:1.1rem"},"Etapa 2 — fecho"));
+  t.appendChild(el("h1",{},"Etapa 2 — fecho"));
   t.appendChild(el("div",{class:"cartao suave"},
     el("div",{class:"rotulo"},"Nesta prática orientada"),
     el("ul",{style:"margin:0;font-size:.87rem"},
@@ -2464,14 +2853,14 @@ function telaEtapa2Fecho(){
       alt?el("li",{},`${alt} em associação alternativa prevista no banco`):null,
       el("li",{},`${rs.length-ok-alt} a rever`))));
 
-  t.appendChild(el("div",{class:"aviso bom"},
+  t.appendChild(aviso("bom",
     el("p",{},el("b",{},"A conexão que importa. "),
       "Ter a proteção individual adequada não elimina falhas de comportamento — e é o comportamento que decide se a barreira está no lugar no momento em que o risco acontece. Uma máscara existe na cena e não protege ninguém quando está no queixo; uma luva existe e não protege quando toca o cabelo e volta ao campo."),
     el("p",{style:"margin:0"},"O caminho inverso também vale: comportamento impecável não compensa uma estrutura que impede o gesto certo. Uma pia bloqueada reduz a higiene das mãos de quem quer higienizar.")));
 
   m.appendChild(t);
   rodape([ el("button",{class:"btn",type:"button",onclick:iniciarEtapa3},"Ir para a Etapa 3") ]);
-  $("#palco").focus();
+  focarTela();
 }
 
 /* ========================================================================
@@ -2519,10 +2908,10 @@ function telaEtapa3(){
   if(S.e3.idx>=S.e3.lista.length) return telaRelatorio();
 
   const d=S.e3.lista[S.e3.idx];
-  t.appendChild(el("h1",{style:"font-size:1.1rem"},"Etapa 3 — Decisão em cabine"));
+  t.appendChild(el("h1",{},"Etapa 3 — Decisão em cabine"));
   t.appendChild(el("div",{class:"hud"},
     el("span",{class:"contador"},`Dilema ${S.e3.idx+1} de ${S.e3.lista.length}`),
-    d.eixo==="incidente"?el("span",{class:"selo rv"},"⚠ Resposta a incidente"):null));
+    d.eixo==="incidente"?selo("rv","Resposta a incidente"):null));
 
   t.appendChild(el("div",{class:"cartao"},
     el("h2",{style:"font-size:1rem"}, d.titulo),
@@ -2539,7 +2928,7 @@ function telaEtapa3(){
 
   m.appendChild(t);
   rodape([]);
-  $("#palco").focus();
+  focarTela();
 }
 function responderDilema(d, escolha, segunda){
   const a = segunda ? d.segundaDecisao.alternativas[escolha] : d.alternativas[escolha];
@@ -2550,9 +2939,9 @@ function responderDilema(d, escolha, segunda){
 
   abrirModal(d.titulo,(c)=>{
     c.appendChild(el("div",{style:"margin-bottom:10px"},
-      el("span",{class:"selo "+(a.adequada?"ok":"rv")}, a.adequada?"✓ Conduta adequada":"✕ Conduta a rever"),
-      (!a.adequada && a.tipoFalha) ? el("span",{class:"selo neutro",style:"margin-left:6px"},
-        a.tipoFalha==="acomodacao"?"falha por acomodação":"falha por omissão") : null));
+      selo(a.adequada?"ok":"rv", a.adequada?"Conduta adequada":"Conduta a rever"),
+      (!a.adequada && a.tipoFalha) ? selo("neutro", a.tipoFalha==="acomodacao"?"falha por acomodação":"falha por omissão",
+        "margin-left:6px") : null));
     c.appendChild(el("p",{style:"font-size:.88rem"}, el("b",{},"Você escolheu: "), a.texto));
     c.appendChild(el("div",{class:"cartao suave"},
       el("div",{class:"rotulo"},"Consequência imediata"),
@@ -2562,7 +2951,7 @@ function responderDilema(d, escolha, segunda){
       el("p",{style:"margin:0;font-size:.88rem"}, a.enquadramento)));
     if(!a.adequada){
       const cert=(segunda?d.segundaDecisao.alternativas:d.alternativas).find(x=>x.adequada);
-      c.appendChild(el("div",{class:"aviso bom"},
+      c.appendChild(aviso("bom",
         el("p",{},el("b",{},"Conduta recomendada: "), cert.texto),
         el("p",{style:"margin:0"}, cert.enquadramento)));
     }
@@ -2591,7 +2980,7 @@ function abrirSegundaDecisao(d, escolhaAnterior){
 }
 function blocoBaseDilema(d){
   const det=el("details",{class:"mais"});
-  det.appendChild(el("summary",{},"Entender melhor"));
+  det.appendChild(el("summary",{}, ico("seta"), "Entender melhor"));
   const c=el("div"); c.appendChild(baseTecnicaHTML(d.baseTecnica, d.camada==="incidente"?null:d.camada, []));
   det.appendChild(c); return det;
 }
@@ -2633,24 +3022,33 @@ function telaRelatorio(){
 
   t.appendChild(el("h1",{},"Relatório de auditoria"));
 
-  /* medidores */
+  /* O resultado abre em bloco grafite: é o pagamento da jornada, e é a
+     única coisa desta tela que o aluno vai olhar antes de qualquer outra.
+     As barras só crescem depois da pintura, para que o número tenha um
+     movimento de chegada em vez de já nascer parado. */
   const md1=el("div",{class:"medidor alt"},
-    el("div",{class:"cab"}, el("span",{class:"rotulo",style:"margin:0"},"Percepção inicial"),
-      el("span",{class:"val"}, `${percInicial}/${at.length}`)),
-    el("div",{class:"trilho"}, el("i",{style:`width:${at.length?Math.round(percInicial/at.length*100):0}%`})),
-    el("p",{class:"miudo-2",style:"margin-top:4px"},
+    el("div",{class:"cab"}, el("span",{class:"rotulo"},"Percepção inicial"),
+      el("span",{class:"val"}, String(percInicial), el("small",{},"/"+at.length))),
+    el("div",{class:"trilho"}, el("i",{})),
+    el("p",{class:"nota"},
       `${percSemPista} sem pista · ${percComPista} com pista · antes de qualquer revisão guiada.`));
-  t.appendChild(md1);
 
   const md2=el("div",{class:"medidor"},
-    el("div",{class:"cab"}, el("span",{class:"rotulo",style:"margin:0"},"Blindagem da simulação"),
-      el("span",{class:"val"}, `${Math.round(blind*100)}%`)),
-    el("div",{class:"trilho"}, el("i",{style:`width:${Math.round(blind*100)}%`})),
-    el("p",{class:"miudo-2",style:"margin-top:4px"},
+    el("div",{class:"cab"}, el("span",{class:"rotulo"},"Blindagem da simulação"),
+      el("span",{class:"val"}, String(Math.round(blind*100)), el("small",{},"%"))),
+    el("div",{class:"trilho"}, el("i",{})),
+    el("p",{class:"nota"},
       "Metade por identificar, metade por escolher a conduta adequada. Inclui o que foi aprendido depois do feedback."));
-  t.appendChild(md2);
 
-  t.appendChild(el("div",{class:"aviso info"},
+  t.appendChild(el("div",{class:"placar"}, md1, md2));
+  const larg1 = at.length?Math.round(percInicial/at.length*100):0, larg2 = Math.round(blind*100);
+  requestAnimationFrame(()=>{
+    const b1=md1.querySelector(".trilho i"), b2=md2.querySelector(".trilho i");
+    if(b1) b1.style.width=larg1+"%";
+    if(b2) b2.style.width=larg2+"%";
+  });
+
+  t.appendChild(aviso("info",
     el("p",{style:"margin:0"},el("b",{},"O que estes números não são. "),
       "A blindagem mede o progresso nesta simulação. Não é a porcentagem de segurança de nenhuma clínica real, não mede a sua prática e não certifica competência profissional.")));
 
@@ -2665,7 +3063,7 @@ function telaRelatorio(){
   Object.keys(CAMADAS).forEach(k=>{
     const e=est[k]; if(!e.total) return;
     tb.appendChild(el("tr",{},
-      el("td",{}, CAMADAS[k].curto),
+      el("th",{scope:"row"}, CAMADAS[k].curto),
       el("td",{class:"n"}, String(e.total)),
       el("td",{class:"n"}, `${e.semPista}/${e.total}`),
       el("td",{class:"n"}, `${e.comPista}/${e.total}`),
@@ -2687,7 +3085,7 @@ function telaRelatorio(){
     bxP.appendChild(ul);
   }else{
     bxP.appendChild(el("p",{style:"margin:0;font-size:.87rem"},
-      el("span",{class:"selo ok"},"✓ Nenhuma pendência"),
+      selo("ok","Nenhuma pendência"),
       " Todos os itens que exigiriam interromper o atendimento foram identificados e receberam conduta adequada."));
   }
   t.appendChild(bxP);
@@ -2695,10 +3093,9 @@ function telaRelatorio(){
   /* leitura qualitativa */
   t.appendChild(leituraQualitativa(est, at));
 
-  /* fechamento */
-  t.appendChild(el("div",{class:"cartao suave",style:"border-left:4px solid var(--verde)"},
-    el("p",{style:"margin:0;font-size:1.02rem;font-weight:700;color:var(--verde-texto)"},
-      "A camada mais frágil é a que ninguém fotografa.")));
+  /* fechamento: a tese do jogo, entre dois fios e sem concorrente ao redor */
+  t.appendChild(el("div",{class:"tese"},
+    el("p",{},"A camada mais frágil é a que ninguém fotografa.")));
 
   t.appendChild(el("div",{class:"cartao"},
     el("div",{class:"rotulo"},"Desafio de transferência"),
@@ -2711,7 +3108,7 @@ function telaRelatorio(){
   /* prática adicional */
   if(S.e3.extras.length){
     const d=el("details",{class:"mais"});
-    d.appendChild(el("summary",{},`Prática adicional — ${S.e3.extras.length} dilemas não usados nesta partida`));
+    d.appendChild(el("summary",{}, ico("seta"), `Prática adicional — ${S.e3.extras.length} dilemas não usados nesta partida`));
     const c=el("div");
     S.e3.extras.forEach(dl=>{
       c.appendChild(el("button",{class:"ficha-item",type:"button",onclick:()=>praticaExtra(dl)},
@@ -2726,7 +3123,7 @@ function telaRelatorio(){
     el("button",{class:"btn sec",type:"button",onclick:revisarDificuldades},"Revisar minhas dificuldades"),
     el("button",{class:"btn neutro",type:"button",onclick:pedirReiniciar},"Reiniciar")
   ]);
-  $("#palco").focus();
+  focarTela();
 }
 
 function leituraQualitativa(est, at){
@@ -2891,7 +3288,7 @@ function textoResumo(est, at, semP, comP, blind, pend){
 }
 function blocoResumo(est, at, semP, comP, blind, pend){
   const d=el("details",{class:"mais"});
-  d.appendChild(el("summary",{},"Resumo para copiar"));
+  d.appendChild(el("summary",{}, ico("seta"), "Resumo para copiar"));
   const c=el("div");
   const txt=textoResumo(est, at, semP, comP, blind, pend);
   const ta=el("textarea",{class:"resumo",readonly:"readonly","aria-label":"Resumo da auditoria em texto"}); ta.value=txt;
@@ -2922,7 +3319,7 @@ function houveProgresso(){
 function zerar(){
   pararCrono();
   S.iniciado=false; S.idxCena=0; S.emRevisao=false;
-  S.itens={}; S.adequados={}; S.neutros={}; S.pistas={}; S.esgotou={};
+  S.itens={}; S.adequados={}; S.neutros={}; S.pistas={}; S.esgotou={}; S.vista={};
   S.e2={cartoes:[],idx:0,resp:{}}; S.e3={lista:[],idx:0,resp:{},extras:[]};
   BANCO.forEach(i=>{ delete i._pistaDada; });
   telaAbertura();
@@ -2946,6 +3343,9 @@ function ligarCabecalho(){
      --topo sempre correto, em vez de medir uma vez e torcer. */
   const cab=document.getElementById("topo");
   if(cab && window.ResizeObserver) new ResizeObserver(medirTopo).observe(cab);
+  /* os icones do cabecalho sao desenhados aqui, da mesma fonte do resto:
+     um unico lugar define o traco. */
+  document.querySelectorAll("[data-ico]").forEach(n=>{ n.innerHTML = svgDe(n.getAttribute("data-ico")); });
   $("#btBriefing").onclick=abrirBriefing;
   $("#btReiniciar").onclick=pedirReiniciar;
 
@@ -2961,6 +3361,7 @@ function ligarCabecalho(){
   bs.onclick=()=>{
     S.som=!S.som;
     bs.setAttribute("aria-pressed",String(S.som));
+    const is=$("#icoSom"); if(is) is.innerHTML=svgDe(S.som?"som":"mudo");
     toast(S.som?"Som ativado.":"Som desativado.");
     if(S.som) bip("ok");
   };
